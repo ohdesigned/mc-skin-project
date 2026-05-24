@@ -10,23 +10,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-    <script>
-      // When GitHub Pages serves the source HTML from the repo root, forward
-      // to the built site under /docs/. The built copy of this file lives at
-      // /docs/index.html and its pathname already contains "/docs/" so this
-      // check never loops.
-      (function () {
-        try {
-          var isGitHubPages =
-            location.hostname.endsWith('github.io') ||
-            location.hostname.endsWith('githubusercontent.com');
-          if (isGitHubPages && location.pathname.indexOf('/docs/') === -1) {
-            var target = location.pathname.replace(/\/?$/, '/') + 'docs/';
-            location.replace(target + location.search + location.hash);
-          }
-        } catch (_) {}
-      })();
-    </script>
     <style>
       html, body { margin: 0; height: 100%; background: #1B1424; color: #F7E6CF; }
       body {
@@ -47,12 +30,30 @@
         justify-content: center;
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-E9w-UWKb.js"></script>
+    <script type="module" crossorigin src="./assets/index-BMoRZpyj.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-BVDIj8io.css">
   </head>
   <body>
     <div id="boot">Loading Pixel Skin Studio...</div>
     <div id="root"></div>
+    <script>
+      window.addEventListener(
+        'error',
+        function (e) {
+          var t = e.target
+          if (!t || t.tagName !== 'SCRIPT') return
+          var boot = document.getElementById('boot')
+          if (!boot || boot.dataset.failed) return
+          boot.dataset.failed = '1'
+          boot.innerHTML =
+            '<div style="max-width:480px;padding:24px;text-align:center;">' +
+            '<div style="font-size:28px;margin-bottom:12px;">Could not load</div>' +
+            '<div style="margin-bottom:18px;font-size:20px;">The app bundle failed to load. Refresh the page.</div>' +
+            '<button onclick="location.reload()" style="font-family:VT323,monospace;font-size:20px;padding:8px 16px;background:#3FB6A8;color:#1B1424;border:3px solid #2A2138;cursor:pointer;">Reload</button></div>'
+        },
+        true,
+      )
+    </script>
     <noscript>
       <p style="font-family: sans-serif; padding: 24px; text-align: center;">
         This app requires JavaScript. Please enable it and reload.

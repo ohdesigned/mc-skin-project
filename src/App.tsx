@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Home } from './pages/Home'
 import { Editor } from './pages/Editor'
 import { Toaster, useToast } from './components/Toaster'
@@ -11,6 +11,11 @@ export type Route =
 export const App = () => {
   const [route, setRoute] = useState<Route>({ name: 'home' })
   const toast = useToast()
+
+  useEffect(() => {
+    const boot = document.getElementById('boot')
+    if (boot) boot.style.display = 'none'
+  }, [])
 
   return (
     <div className="app-shell">
