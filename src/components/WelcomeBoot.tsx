@@ -20,12 +20,13 @@ export const WelcomeBoot = ({ onDone }: Props) => {
   const [charIdx, setCharIdx] = useState(0)
   const [done, setDone] = useState(false)
 
+  // Typewriter animation — separate from the finish callback so React effect
+  // cleanup doesn't cancel onDone when `done` flips to true.
   useEffect(() => {
     if (done) return
     if (lineIdx >= BOOT_LINES.length) {
       setDone(true)
-      const t = setTimeout(() => onDone(), 750)
-      return () => clearTimeout(t)
+      return
     }
     const line = BOOT_LINES[lineIdx]
     if (charIdx >= line.length) {
@@ -37,11 +38,20 @@ export const WelcomeBoot = ({ onDone }: Props) => {
     }
     const t = setTimeout(() => setCharIdx((c) => c + 1), 14)
     return () => clearTimeout(t)
-  }, [charIdx, lineIdx, done, onDone])
+  }, [charIdx, lineIdx, done])
+
+  useEffect(() => {
+    if (!done) return
+    const t = setTimeout(onDone, 750)
+    return () => clearTimeout(t)
+  }, [done, onDone])
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
+      onClick={() => onDone()}
+      role="presentation"
+      title="Click to skip"
       style={{
         background:
           'radial-gradient(ellipse at center, #2A2138 0%, #1B1424 70%, #0c0712 100%)',

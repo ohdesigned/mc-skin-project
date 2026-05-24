@@ -19,6 +19,12 @@ export const App = () => {
     hydrate()
   }, [hydrate])
 
+  // Never leave the UI hidden if the boot animation fails to finish.
+  useEffect(() => {
+    const t = window.setTimeout(() => setBooted(true), 12000)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       {!booted && <WelcomeBoot onDone={() => setBooted(true)} />}
