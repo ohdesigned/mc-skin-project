@@ -20,6 +20,7 @@ const emptyPartModes = (): Record<BodyPart, PartLayerMode> =>
   >
 import {
   buildDefaultBase,
+  clearCanvas,
   cloneCanvas,
   compositeLayers,
   createCanvas,
@@ -129,6 +130,8 @@ const MAX_HISTORY = 40
 
 const initialLayers = (model: ModelKind): Layer[] => {
   const base = buildDefaultBase(model)
+  const paint = createCanvas()
+  clearCanvas(paint)
   return [
     {
       id: uid(),
@@ -150,7 +153,7 @@ const initialLayers = (model: ModelKind): Layer[] => {
       hue: 0,
       saturation: 1,
       brightness: 1,
-      canvas: createCanvas(),
+      canvas: paint,
     },
   ]
 }

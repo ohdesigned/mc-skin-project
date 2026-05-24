@@ -108,6 +108,18 @@ export const BODY_PART_GROUPS: { key: BodyPart; label: string; overlayKey: BodyP
   { key: 'left_leg', label: 'Left Leg', overlayKey: 'left_leg_overlay' },
 ]
 
+/** Inner (base) layer body parts — overlay slots stay transparent like Blockbench. */
+export const INNER_BODY_PARTS = [
+  'head',
+  'body',
+  'right_arm',
+  'left_arm',
+  'right_leg',
+  'left_leg',
+] as const satisfies readonly BodyPart[]
+
+export type InnerBodyPart = (typeof INNER_BODY_PARTS)[number]
+
 // All pixels of a 64x64 skin that are NOT part of any valid UV face.
 // Used to draw a "muted/forbidden" mask in the canvas so users only paint
 // where Minecraft actually reads pixels from.
