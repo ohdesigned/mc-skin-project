@@ -18,6 +18,11 @@ import {
   toDataURL,
 } from '../skin/canvas'
 import { PART_LAYER_MODE_LABEL, type PartLayerMode } from '../skin/partVisibility'
+import {
+  draftMatchesRoute,
+  loadEditorDraft,
+  saveEditorDraft,
+} from '../state/session'
 
 interface Props {
   editId?: string
@@ -31,9 +36,17 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   const setModel = useEditor((s) => s.setModel)
   const reset = useEditor((s) => s.reset)
   const loadSkinAsBase = useEditor((s) => s.loadSkinAsBase)
+  const restoreFromDraft = useEditor((s) => s.restoreFromDraft)
+  const serializeDraft = useEditor((s) => s.serializeDraft)
   const setTool = useEditor((s) => s.setTool)
+  const tool = useEditor((s) => s.tool)
   const activePart = useEditor((s) => s.activePart)
   const partLayerModes = useEditor((s) => s.partLayerModes)
+  const previewBackground = useEditor((s) => s.previewBackground)
+  const activeLayerId = useEditor((s) => s.activeLayerId)
+  const brushSize = useEditor((s) => s.brushSize)
+  const mirror = useEditor((s) => s.mirror)
+  const color = useEditor((s) => s.color)
   const cyclePartLayerMode = useEditor((s) => s.cyclePartLayerMode)
   const resetPartLayerModes = useEditor((s) => s.resetPartLayerModes)
   const undo = useEditor((s) => s.undo)
@@ -47,6 +60,7 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   const [name, setName] = useState('Untitled Skin')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [presetsOpen, setPresetsOpen] = useState(false)
+  const [ready, setReady] = useState(false)
   const [utilityPanel, setUtilityPanel] = useState<
     'tools' | 'colors' | 'layers' | 'preview'
   >('tools')
@@ -54,9 +68,23 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
+      setReady(false)
+      const draft = loadEditorDraft()
+      if (draft && draftMatchesRoute(draft, editId)) {
+        if (cancelled) return
+        setName(draft.name)
+        await restoreFromDraft(draft)
+        if (cancelled) return
+        setReady(true)
+        return
+      }
+
       if (editId) {
         const found = galSkins.find((s) => s.id === editId)
-        if (!found) return
+        if (!found) {
+          if (!cancelled) setReady(true)
+          return
+        }
         if (cancelled) return
         setName(found.name)
         setModel(found.model)
@@ -67,12 +95,36 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         reset('slim')
         setModel('slim')
       }
+      if (!cancelled) setReady(true)
     })()
     return () => {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId])
+
+  useEffect(() => {
+    if (!ready) return
+    const id = window.setTimeout(() => {
+      saveEditorDraft(serializeDraft(name, editId))
+    }, 400)
+    return () => window.clearTimeout(id)
+  }, [
+    ready,
+    editId,
+    name,
+    layers,
+    model,
+    tool,
+    color,
+    brushSize,
+    mirror,
+    previewBackground,
+    partLayerModes,
+    activePart,
+    activeLayerId,
+    serializeDraft,
+  ])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -133,6 +185,14 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     } catch (e) {
       console.warn(e)
     }
+  }
+
+  if (!ready) {
+    return (
+      <div className="h-full w-full grid place-items-center panel-text text-accent-cream/80">
+        Restoring session...
+      </div>
+    )
   }
 
   return (

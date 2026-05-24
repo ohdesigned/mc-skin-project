@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { BodyPart, ModelKind } from '../skin/format'
 import type { PartLayerMode } from '../skin/partVisibility'
 import type { PreviewBackgroundId } from '../skin/previewBackgrounds'
+import type { EditorDraft } from './session'
 
 const BASE_PART_KEYS: BodyPart[] = [
   'head',
@@ -113,6 +114,8 @@ interface EditorState {
   composite: () => HTMLCanvasElement
   reset: (model?: ModelKind) => void
   loadSkinAsBase: (canvas: HTMLCanvasElement) => void
+  restoreFromDraft: (draft: EditorDraft) => Promise<void>
+  serializeDraft: (name: string, editId?: string) => EditorDraft
 }
 
 const uid = () => Math.random().toString(36).slice(2, 9)
@@ -483,6 +486,64 @@ export const useEditor = create<EditorState>((set, get) => {
         future: [],
         partLayerModes: emptyPartModes(),
         activePart: 'all',
+      })
+    },
+
+    serializeDraft: (name, editId) => {
+      const s = get()
+      return {
+        editId,
+        name,
+        model: s.model,
+        activeLayerId: s.activeLayerId ?? s.layers[0]?.id ?? '',
+        tool: s.tool,
+        color: s.color,
+        brushSize: s.brushSize,
+        mirror: s.mirror,
+        previewBackground: s.previewBackground,
+        partLayerModes: s.partLayerModes,
+        activePart: s.activePart,
+        layers: s.layers.map((l) => ({
+          id: l.id,
+          name: l.name,
+          visible: l.visible,
+          locked: l.locked,
+          opacity: l.opacity,
+          hue: l.hue,
+          saturation: l.saturation,
+          brightness: l.brightness,
+          dataUrl: toDataURL(l.canvas),
+        })),
+      }
+    },
+
+    restoreFromDraft: async (draft) => {
+      const restored = await Promise.all(
+        draft.layers.map(async (rec) => ({
+          id: rec.id,
+          name: rec.name,
+          visible: rec.visible,
+          locked: rec.locked,
+          opacity: rec.opacity,
+          hue: rec.hue,
+          saturation: rec.saturation,
+          brightness: rec.brightness,
+          canvas: await dataUrlToCanvas(rec.dataUrl),
+        })),
+      )
+      set({
+        model: draft.model,
+        layers: restored,
+        activeLayerId: draft.activeLayerId || restored[0]?.id || null,
+        tool: draft.tool,
+        color: draft.color,
+        brushSize: draft.brushSize,
+        mirror: draft.mirror,
+        previewBackground: draft.previewBackground,
+        partLayerModes: draft.partLayerModes,
+        activePart: draft.activePart,
+        history: [],
+        future: [],
       })
     },
   }
