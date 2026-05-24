@@ -16,6 +16,12 @@ export interface Layer {
   visible: boolean
   locked: boolean
   opacity: number
+  /** Hue rotation in degrees (-180 to 180). */
+  hue: number
+  /** Saturation multiplier (0–2, 1 = normal). */
+  saturation: number
+  /** Brightness multiplier (0–2, 1 = normal). */
+  brightness: number
   canvas: HTMLCanvasElement
 }
 
@@ -69,6 +75,11 @@ interface EditorState {
   toggleLayerVisible: (id: string) => void
   toggleLayerLocked: (id: string) => void
   setLayerOpacity: (id: string, opacity: number) => void
+  setLayerAdjustments: (
+    id: string,
+    adj: Partial<Pick<Layer, 'hue' | 'saturation' | 'brightness'>>,
+  ) => void
+  resetLayerAdjustments: (id: string) => void
   renameLayer: (id: string, name: string) => void
   moveLayer: (id: string, dir: 1 | -1) => void
   mergeDown: (id: string) => void
@@ -100,6 +111,9 @@ const initialLayers = (model: ModelKind): Layer[] => {
       visible: true,
       locked: false,
       opacity: 1,
+      hue: 0,
+      saturation: 1,
+      brightness: 1,
       canvas: base,
     },
     {
@@ -108,15 +122,18 @@ const initialLayers = (model: ModelKind): Layer[] => {
       visible: true,
       locked: false,
       opacity: 1,
+      hue: 0,
+      saturation: 1,
+      brightness: 1,
       canvas: createCanvas(),
     },
   ]
 }
 
 export const useEditor = create<EditorState>((set, get) => {
-  const layers = initialLayers('classic')
+  const layers = initialLayers('slim')
   return {
-    model: 'classic',
+    model: 'slim',
     layers,
     activeLayerId: layers[layers.length - 1].id,
     tool: 'pencil',
@@ -157,6 +174,9 @@ export const useEditor = create<EditorState>((set, get) => {
         visible: true,
         locked: false,
         opacity: 1,
+        hue: 0,
+        saturation: 1,
+        brightness: 1,
         canvas: createCanvas(),
       }
       set((s) => ({ layers: [...s.layers, layer], activeLayerId: layer.id }))
@@ -170,6 +190,9 @@ export const useEditor = create<EditorState>((set, get) => {
         visible: true,
         locked: false,
         opacity: 1,
+        hue: 0,
+        saturation: 1,
+        brightness: 1,
         canvas: cloneCanvas(canvas),
       }
       set((s) => ({ layers: [...s.layers, layer], activeLayerId: layer.id }))
@@ -233,6 +256,28 @@ export const useEditor = create<EditorState>((set, get) => {
       set((s) => ({
         layers: s.layers.map((l) =>
           l.id === id ? { ...l, opacity } : l,
+        ),
+      }))
+    },
+
+    setLayerAdjustments: (id, adj) => {
+      set((s) => ({
+        layers: s.layers.map((l) => {
+          if (l.id !== id) return l
+          return {
+            ...l,
+            hue: adj.hue ?? l.hue,
+            saturation: adj.saturation ?? l.saturation,
+            brightness: adj.brightness ?? l.brightness,
+          }
+        }),
+      }))
+    },
+
+    resetLayerAdjustments: (id) => {
+      set((s) => ({
+        layers: s.layers.map((l) =>
+          l.id === id ? { ...l, hue: 0, saturation: 1, brightness: 1 } : l,
         ),
       }))
     },
@@ -308,6 +353,9 @@ export const useEditor = create<EditorState>((set, get) => {
               visible: meta?.visible ?? true,
               locked: meta?.locked ?? false,
               opacity: meta?.opacity ?? 1,
+              hue: meta?.hue ?? 0,
+              saturation: meta?.saturation ?? 1,
+              brightness: meta?.brightness ?? 1,
               canvas: rec.canvas,
             }
           }),
@@ -340,6 +388,9 @@ export const useEditor = create<EditorState>((set, get) => {
               visible: meta?.visible ?? true,
               locked: meta?.locked ?? false,
               opacity: meta?.opacity ?? 1,
+              hue: meta?.hue ?? 0,
+              saturation: meta?.saturation ?? 1,
+              brightness: meta?.brightness ?? 1,
               canvas: rec.canvas,
             }
           }),
@@ -353,7 +404,7 @@ export const useEditor = create<EditorState>((set, get) => {
     composite: () => compositeLayers(get().layers),
 
     reset: (model) => {
-      const m = model ?? get().model
+      const m = model ?? 'slim'
       const layers = initialLayers(m)
       set({
         layers,
@@ -371,6 +422,9 @@ export const useEditor = create<EditorState>((set, get) => {
         visible: true,
         locked: false,
         opacity: 1,
+        hue: 0,
+        saturation: 1,
+        brightness: 1,
         canvas: cloneCanvas(canvas),
       }
       const paint: Layer = {
@@ -379,6 +433,9 @@ export const useEditor = create<EditorState>((set, get) => {
         visible: true,
         locked: false,
         opacity: 1,
+        hue: 0,
+        saturation: 1,
+        brightness: 1,
         canvas: createCanvas(),
       }
       set({

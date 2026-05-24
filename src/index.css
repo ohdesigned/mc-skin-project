@@ -64,17 +64,6 @@ button {
     align-items: center;
     gap: 10px;
   }
-  .pixel-title-bar .stripes {
-    display: inline-block;
-    width: 24px;
-    height: 10px;
-    background:
-      repeating-linear-gradient(135deg,
-        #D54B4B 0 3px,
-        #F5C04A 3px 6px,
-        #3FB6A8 6px 9px,
-        transparent 9px 12px);
-  }
   .pixel-button {
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
@@ -163,32 +152,6 @@ button {
     text-transform: uppercase;
   }
 
-  .crt-overlay {
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    background:
-      repeating-linear-gradient(
-        to bottom,
-        rgba(0,0,0,0.08) 0px,
-        rgba(0,0,0,0.08) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-    mix-blend-mode: multiply;
-  }
-
-  .scanline-stripes {
-    background:
-      repeating-linear-gradient(135deg,
-        #D54B4B 0 4px,
-        #F5C04A 4px 8px,
-        #3FB6A8 8px 12px,
-        #7E4FB8 12px 16px);
-    background-size: 22.6px 22.6px;
-    animation: tape 1.6s linear infinite;
-  }
-
   .pixel-scroll {
     scrollbar-width: thin;
     scrollbar-color: #2A2138 #B07B47;
@@ -216,6 +179,77 @@ button {
     font-family: 'Press Start 2P', monospace;
     font-size: 9px;
     line-height: 1.4;
+  }
+
+  /* Readable body text inside pixel panels (presets, colors, dialogs). */
+  .panel-text {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    line-height: 1.35;
+    color: #2A2138;
+  }
+  .panel-label {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    line-height: 1.2;
+    color: #2A2138;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .panel-btn-text {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(27, 20, 36, 0.72);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+  }
+  .dialog-box {
+    width: min(420px, 96vw);
+    background: #F7E6CF;
+    border: 3px solid #2A2138;
+    box-shadow: 8px 8px 0 0 #2A2138;
+  }
+  .dialog-title-bar {
+    background: #2A2138;
+    color: #F7E6CF;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-bottom: 3px solid #2A2138;
+  }
+  .dialog-body {
+    padding: 14px 16px;
+    background: #FFFBEA;
+  }
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #E9D6B4;
+    border-top: 3px solid #2A2138;
+  }
+
+  select.pixel-input {
+    cursor: pointer;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #2A2138 50%),
+      linear-gradient(135deg, #2A2138 50%, transparent 50%);
+    background-position: calc(100% - 16px) calc(50% + 2px),
+      calc(100% - 11px) calc(50% + 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 28px;
   }
 
   .pixel-checkbox {

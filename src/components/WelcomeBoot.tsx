@@ -4,9 +4,7 @@ const BOOT_LINES = [
   '> Booting PIXEL SKIN STUDIO v1.0...',
   '> Loading palette.dat ........... OK',
   '> Mounting /skins ............... OK',
-  '> Loading presets/face .......... OK',
-  '> Loading presets/hair .......... OK',
-  '> Loading presets/wardrobe ...... OK',
+  '> Loading preset library ........ OK',
   '> Calibrating 64x64 atlas ....... OK',
   '> Ready.',
 ]
@@ -63,7 +61,6 @@ export const WelcomeBoot = ({ onDone }: Props) => {
       <div className="w-[640px] max-w-[92vw]">
         <div className="pixel-window">
           <div className="pixel-title-bar">
-            <span className="stripes" />
             <span>PIXEL SKIN STUDIO</span>
             <span className="ml-auto animate-blink">|</span>
           </div>
@@ -114,7 +111,6 @@ export const WelcomeBoot = ({ onDone }: Props) => {
           </div>
         </div>
       </div>
-      <div className="crt-overlay" />
     </div>
   )
 }

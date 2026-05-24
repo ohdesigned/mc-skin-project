@@ -56,7 +56,6 @@ export const Home = ({ onNew, onEdit }: Props) => {
         />
         <SideRack onNew={onNew} count={skins.length} />
       </div>
-      <div className="crt-overlay" />
     </div>
   )
 }
@@ -64,7 +63,6 @@ export const Home = ({ onNew, onEdit }: Props) => {
 const TopBar = ({ dateStr }: { dateStr: string }) => (
   <div className="flex items-center justify-between gap-3 px-2">
     <div className="flex items-center gap-3">
-      <span className="inline-block w-12 h-4 scanline-stripes" />
       <span className="pixel-text text-[14px] text-accent-cream">
         PIXEL SKIN STUDIO
       </span>
@@ -96,7 +94,6 @@ const MainWindow = (p: MainWindowProps) => {
   return (
     <div className="pixel-window flex flex-col min-h-0">
       <div className="pixel-title-bar">
-        <span className="stripes" />
         <span>/SKINS/MY-CREATIONS</span>
         <div className="ml-auto flex items-center gap-2">
           <FilterPill

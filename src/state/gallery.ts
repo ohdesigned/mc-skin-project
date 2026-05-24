@@ -18,7 +18,8 @@ interface GalleryState {
   update: (id: string, patch: Partial<Omit<SavedSkin, 'id' | 'createdAt'>>) => void
 }
 
-const STORAGE_KEY = 'pixel-skin-studio:gallery:v1'
+const STORAGE_KEY = 'pixel-skin-studio:gallery:v2'
+const LEGACY_KEY = 'pixel-skin-studio:gallery:v1'
 const uid = () => Math.random().toString(36).slice(2, 10)
 
 const persist = (skins: SavedSkin[]) => {
@@ -29,34 +30,36 @@ const persist = (skins: SavedSkin[]) => {
   }
 }
 
+const withoutSeeds = (skins: SavedSkin[]) =>
+  skins.filter((s) => !s.id.startsWith('seed-'))
+
 export const useGallery = create<GalleryState>((set, get) => ({
   skins: [],
 
   hydrate: () => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as SavedSkin[]
-        if (Array.isArray(parsed)) {
-          set({ skins: parsed })
-          return
+      let raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) {
+        const legacy = localStorage.getItem(LEGACY_KEY)
+        if (legacy) {
+          const parsed = JSON.parse(legacy) as SavedSkin[]
+          if (Array.isArray(parsed)) {
+            const cleaned = withoutSeeds(parsed)
+            persist(cleaned)
+            localStorage.removeItem(LEGACY_KEY)
+            set({ skins: cleaned })
+            return
+          }
         }
+        set({ skins: [] })
+        return
       }
-      // First launch: seed a few example skins so the gallery isn't empty.
-      // We lazy-load the sample generator so SSR doesn't choke (canvas is DOM).
-      import('../skin/samples').then(({ generateSampleSkins }) => {
-        const samples = generateSampleSkins()
-        const now = Date.now()
-        const seeded: SavedSkin[] = samples.map((s, i) => ({
-          id: `seed-${i}-${Math.random().toString(36).slice(2, 7)}`,
-          name: s.name,
-          model: s.model,
-          dataUrl: s.dataUrl,
-          createdAt: now - i * 60_000,
-        }))
-        persist(seeded)
-        set({ skins: seeded })
-      })
+      const parsed = JSON.parse(raw) as SavedSkin[]
+      if (Array.isArray(parsed)) {
+        const cleaned = withoutSeeds(parsed)
+        if (cleaned.length !== parsed.length) persist(cleaned)
+        set({ skins: cleaned })
+      }
     } catch {
       // ignore
     }

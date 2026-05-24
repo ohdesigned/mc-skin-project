@@ -3,12 +3,14 @@ import { useEditor } from '../state/editor'
 import { useGallery } from '../state/gallery'
 import { PixelCanvas } from '../components/PixelCanvas'
 import { LayerPanel } from '../components/LayerPanel'
+import { MiniSkinPreview } from '../components/MiniSkinPreview'
 import { ToolBar } from '../components/ToolBar'
 import { ColorPicker } from '../components/ColorPicker'
 import { PresetsPanel } from '../components/PresetsPanel'
 import { SkinPreview } from '../components/SkinPreview'
 import { Icon } from '../components/Icon'
 import { BODY_PART_GROUPS, BodyPart } from '../skin/format'
+import { useConfirm } from '../state/dialogs'
 import {
   compositeLayers,
   dataUrlToCanvas,
@@ -33,6 +35,7 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   const activePart = useEditor((s) => s.activePart)
   const undo = useEditor((s) => s.undo)
   const redo = useEditor((s) => s.redo)
+  const { askConfirm } = useConfirm()
 
   const galSkins = useGallery((s) => s.skins)
   const saveSkin = useGallery((s) => s.save)
@@ -59,7 +62,8 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         if (cancelled) return
         loadSkinAsBase(c)
       } else {
-        reset(model)
+        reset('slim')
+        setModel('slim')
       }
     })()
     return () => {
@@ -114,8 +118,14 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     return () => window.removeEventListener('keydown', onKey)
   }, [setTool, undo, redo])
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!previewDataUrl) return
+    const ok = await askConfirm({
+      title: 'Save Skin',
+      message: `Save "${name}" to your gallery?`,
+      confirmLabel: 'Save',
+    })
+    if (!ok) return
     if (editId) {
       updateSkin(editId, { name, model, dataUrl: previewDataUrl })
     } else {
@@ -124,7 +134,13 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     onSaved(name)
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    const ok = await askConfirm({
+      title: 'Download Skin',
+      message: `Download "${name || 'minecraft-skin'}.png"?`,
+      confirmLabel: 'Download',
+    })
+    if (!ok) return
     const composite = compositeLayers(layers)
     downloadCanvas(composite, name || 'minecraft-skin')
   }
@@ -162,7 +178,7 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
           - md: 2 columns
           - tablet/mobile: stacked tabs
       */}
-      <div className="grid gap-3 min-h-0 grid-cols-1 md:grid-cols-[260px_1fr_260px] xl:grid-cols-[260px_1fr_300px_320px]">
+      <div className="grid gap-3 min-h-0 grid-cols-1 md:grid-cols-[260px_1fr_280px] xl:grid-cols-[260px_1fr_280px_320px]">
         <div className="hidden md:flex flex-col gap-3 min-h-0">
           <ToolBar />
           <div className="min-h-[200px]">
@@ -173,7 +189,6 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         <div className="flex flex-col gap-3 min-h-0">
           <div className="pixel-window flex-1 min-h-0 flex flex-col">
             <div className="pixel-title-bar">
-              <span className="stripes" />
               <span>{view === 'canvas' ? 'ATLAS // 64x64' : '3D PREVIEW'}</span>
               <div className="ml-auto flex gap-1 md:hidden">
                 <button
@@ -226,50 +241,14 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         </div>
 
         <div className="hidden md:flex flex-col gap-3 min-h-0">
-          <LayerPanel />
+          <div className="flex-1 min-h-0">
+            <LayerPanel />
+          </div>
+          <MiniSkinPreview />
         </div>
 
-        <div className="hidden xl:flex flex-col gap-3 min-h-0">
-          <div className="pixel-window">
-            <div className="pixel-title-bar">
-              <span className="stripes" />
-              <span>3D PREVIEW</span>
-            </div>
-            <div className="bg-bg-desk2 p-3 flex flex-col items-center gap-2">
-              <div
-                className="border-[3px] border-ink"
-                style={{
-                  background:
-                    'linear-gradient(180deg, #E9D6B4 0%, #C9AC7E 100%)',
-                }}
-              >
-                <SkinPreview
-                  imageUrl={previewDataUrl}
-                  model={model}
-                  width={260}
-                  height={340}
-                  pose={animation}
-                  rotate={animation !== 'none'}
-                  interactive
-                  zoom={0.95}
-                />
-              </div>
-              <div className="grid grid-cols-4 gap-1 w-full">
-                {(['idle', 'walk', 'wave', 'none'] as const).map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => setAnimation(a)}
-                    className={`pixel-button compact ${animation === a ? 'active' : ''}`}
-                  >
-                    <span style={{ fontSize: 8 }}>{a.toUpperCase()}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="min-h-[280px] flex-1">
-            <PresetsPanel />
-          </div>
+        <div className="hidden xl:flex flex-col min-h-0 flex-1">
+          <PresetsPanel />
         </div>
       </div>
 
@@ -290,7 +269,6 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         </div>
       )}
 
-      <div className="crt-overlay" />
     </div>
   )
 }
@@ -314,7 +292,6 @@ interface TopBarProps {
 const EditorTopBar = (p: TopBarProps) => (
   <div className="pixel-window">
     <div className="pixel-title-bar">
-      <span className="stripes" />
       <span>EDITOR // /skins/</span>
       <input
         className="pixel-input ml-2 max-w-[200px]"
@@ -323,16 +300,16 @@ const EditorTopBar = (p: TopBarProps) => (
       />
       <div className="ml-auto flex items-center gap-2 flex-wrap">
         <button
-          onClick={() => p.setModel('classic')}
-          className={`pixel-button compact ${p.model === 'classic' ? 'active' : ''}`}
-        >
-          CLASSIC
-        </button>
-        <button
           onClick={() => p.setModel('slim')}
           className={`pixel-button compact teal ${p.model === 'slim' ? 'active' : ''}`}
         >
           SLIM
+        </button>
+        <button
+          onClick={() => p.setModel('classic')}
+          className={`pixel-button compact ${p.model === 'classic' ? 'active' : ''}`}
+        >
+          CLASSIC
         </button>
       </div>
     </div>
@@ -365,7 +342,7 @@ const EditorTopBar = (p: TopBarProps) => (
         onClick={() => p.setPresetsOpen(!p.presetsOpen)}
         className="pixel-button compact purple flex items-center gap-1 xl:hidden"
       >
-        <Icon name="star" color="#FFFBEA" /> PRESETS
+        <Icon name="star" color="#FFFBEA" /> MY PRESETS
       </button>
       <div className="ml-auto flex items-center gap-2">
         <button

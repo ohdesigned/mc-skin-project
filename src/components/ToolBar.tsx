@@ -36,7 +36,6 @@ export const ToolBar = () => {
   return (
     <div className="pixel-window">
       <div className="pixel-title-bar">
-        <span className="stripes" />
         <span>TOOLS</span>
       </div>
       <div className="p-2 grid grid-cols-3 gap-2 bg-bg-desk2">

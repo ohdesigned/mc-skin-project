@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { Home } from './pages/Home'
 import { Editor } from './pages/Editor'
 import { useGallery } from './state/gallery'
+import { usePresets } from './state/presets'
+import { useColorLibrary } from './state/colors'
 import { WelcomeBoot } from './components/WelcomeBoot'
 import { Toaster, useToast } from './components/Toaster'
+import { DialogHost } from './components/DialogHost'
 
 export type Route =
   | { name: 'home' }
@@ -12,12 +15,16 @@ export type Route =
 export const App = () => {
   const [route, setRoute] = useState<Route>({ name: 'home' })
   const [booted, setBooted] = useState(false)
-  const hydrate = useGallery((s) => s.hydrate)
+  const hydrateGallery = useGallery((s) => s.hydrate)
+  const hydratePresets = usePresets((s) => s.hydrate)
+  const hydrateColors = useColorLibrary((s) => s.hydrate)
   const toast = useToast()
 
   useEffect(() => {
-    hydrate()
-  }, [hydrate])
+    hydrateGallery()
+    hydratePresets()
+    hydrateColors()
+  }, [hydrateGallery, hydratePresets, hydrateColors])
 
   // Never leave the UI hidden if the boot animation fails to finish.
   useEffect(() => {
@@ -52,6 +59,7 @@ export const App = () => {
         )}
       </div>
       <Toaster />
+      <DialogHost />
     </div>
   )
 }
