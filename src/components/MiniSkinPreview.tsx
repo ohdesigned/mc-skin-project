@@ -33,7 +33,7 @@ export const MiniSkinPreview = () => {
           width={100}
           height={140}
           pose="none"
-          rotate={false}
+          rotate
           interactive
           zoom={0.88}
           backgroundId={previewBackground}
