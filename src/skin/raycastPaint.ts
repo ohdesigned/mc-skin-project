@@ -9,6 +9,16 @@ export interface SkinHit {
   py: number
   bodyPart: BodyPart
   layer: 'inner' | 'outer'
+  faceIndex: number
+}
+
+/** Whether two raycast hits can be connected with a 2D atlas stroke. */
+export const canConnectStroke = (from: SkinHit, to: SkinHit): boolean => {
+  if (from.bodyPart !== to.bodyPart || from.layer !== to.layer) return false
+  if (from.faceIndex >= 0 && from.faceIndex === to.faceIndex) return true
+  const dx = Math.abs(from.px - to.px)
+  const dy = Math.abs(from.py - to.py)
+  return Math.max(dx, dy) <= 20
 }
 
 interface PartMeshEntry {
@@ -94,7 +104,13 @@ export const raycastSkin = (
       entry.layer === 'outer' ? (OVERLAY_FOR[entry.bodyPart] ?? overlayKey) : entry.bodyPart
 
     const { px, py } = uvToSkinPixel(hit.uv.x, hit.uv.y)
-    return { px, py, bodyPart: atlasPart, layer: entry.layer }
+    return {
+      px,
+      py,
+      bodyPart: atlasPart,
+      layer: entry.layer,
+      faceIndex: hit.faceIndex ?? -1,
+    }
   }
   return null
 }

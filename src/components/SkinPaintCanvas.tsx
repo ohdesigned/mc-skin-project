@@ -4,7 +4,12 @@ import { MOUSE, TOUCH } from 'three'
 import { ModelKind } from '../skin/format'
 import { compositeLayers, toDataURL } from '../skin/canvas'
 import { applyPartLayerModes } from '../skin/partVisibility'
-import { buildPaintTargets, raycastSkin } from '../skin/raycastPaint'
+import {
+  buildPaintTargets,
+  canConnectStroke,
+  raycastSkin,
+  type SkinHit,
+} from '../skin/raycastPaint'
 import { applyToolAtPixel, strokeToolLine } from '../skin/paintAtPixel'
 import { useEditor } from '../state/editor'
 import { CharacterPreviewFrame } from './CharacterPreviewFrame'
@@ -29,7 +34,7 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
   const snapshot = useEditor((s) => s.snapshot)
 
   const paintingRef = useRef(false)
-  const lastPixelRef = useRef<{ x: number; y: number } | null>(null)
+  const lastHitRef = useRef<SkinHit | null>(null)
   const didChangeRef = useRef(false)
   const compositeRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -173,9 +178,9 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
       if (toolRef.current !== 'eyedropper') snapshot()
       paintingRef.current = true
       didChangeRef.current = false
-      lastPixelRef.current = null
+      lastHitRef.current = null
       const painted = paintAt(e.clientX, e.clientY)
-      if (painted) lastPixelRef.current = { x: painted.px, y: painted.py }
+      if (painted) lastHitRef.current = painted
     }
 
     const move = (e: PointerEvent) => {
@@ -183,17 +188,22 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
       if (toolRef.current === 'fill' || toolRef.current === 'eyedropper') return
       const hit = paintAt(e.clientX, e.clientY)
       if (!hit) return
-      const last = lastPixelRef.current
+      const last = lastHitRef.current
       const composite = compositeRef.current
-      if (last && composite && (last.x !== hit.px || last.y !== hit.py)) {
-        strokeToolLine(last.x, last.y, hit.px, hit.py, composite)
+      if (
+        last &&
+        composite &&
+        (last.px !== hit.px || last.py !== hit.py) &&
+        canConnectStroke(last, hit)
+      ) {
+        strokeToolLine(last.px, last.py, hit.px, hit.py, composite)
       }
-      lastPixelRef.current = { x: hit.px, y: hit.py }
+      lastHitRef.current = hit
     }
 
     const up = () => {
       paintingRef.current = false
-      lastPixelRef.current = null
+      lastHitRef.current = null
       viewer.controls.enabled = true
       if (didChangeRef.current && colorRef.current) pushRecentColor(colorRef.current)
       didChangeRef.current = false

@@ -176,9 +176,12 @@ export const buildBlockbenchBase = (model: ModelKind): HTMLCanvasElement => {
   return c
 }
 
-// Default starting skin — Blockbench-style color blocks per body part.
-export const buildDefaultBase = (model: ModelKind): HTMLCanvasElement =>
-  buildBlockbenchBase(model)
+// Default starting skin — fully transparent.
+export const buildDefaultBase = (_model: ModelKind): HTMLCanvasElement => {
+  const c = createCanvas()
+  clearCanvas(c)
+  return c
+}
 
 // Minimal aesthetic mannequin used for preset previews.
 export const buildMannequinBase = (model: ModelKind): HTMLCanvasElement => {
