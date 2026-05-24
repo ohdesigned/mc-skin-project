@@ -289,6 +289,31 @@ button {
     transform: rotate(-45deg);
     box-shadow: 4px -3px 0 0 #2A2138, 4px -1px 0 0 #2A2138;
   }
+
+  .pixel-range {
+    appearance: none;
+    height: 12px;
+    border: 2px solid #2A2138;
+    background: linear-gradient(to bottom, #FFFBEA 0%, #E9D6B4 100%);
+    box-shadow: inset 1px 1px 0 0 #fff, inset -1px -1px 0 0 #B07B47;
+  }
+  .pixel-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 20px;
+    border: 2px solid #2A2138;
+    background: #F5C04A;
+    box-shadow: 2px 2px 0 0 #2A2138;
+    cursor: ew-resize;
+  }
+  .pixel-range::-moz-range-thumb {
+    width: 14px;
+    height: 20px;
+    border: 2px solid #2A2138;
+    background: #F5C04A;
+    box-shadow: 2px 2px 0 0 #2A2138;
+    cursor: ew-resize;
+  }
 }
 
 /* Float animation for floppies */

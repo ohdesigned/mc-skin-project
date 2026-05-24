@@ -180,7 +180,7 @@ export const ColorPicker = () => {
             <div className="p-2 border-t-[3px] border-ink bg-bg-desk2">
               <div className="panel-label mb-1">Recent</div>
               <div className="grid grid-cols-8 gap-1">
-                {recent.map((c, i) => (
+                {recent.slice(0, 8).map((c, i) => (
                   <Swatch
                     key={c + i}
                     color={c}

@@ -1,6 +1,6 @@
 import { Icon } from './Icon'
 import { useEditor } from '../state/editor'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fileToCanvas, drawLayerComposite, getCtx, layerToDataUrl } from '../skin/canvas'
 import { useToast } from './Toaster'
 import { useSavePresetFlow } from '../hooks/useSavePresetFlow'
@@ -28,6 +28,7 @@ export const LayerPanel = () => {
   const toast = useToast()
 
   const fileRef = useRef<HTMLInputElement>(null)
+  const [openAdjustLayerId, setOpenAdjustLayerId] = useState<string | null>(null)
 
   if (typeof window !== 'undefined') {
     ;(window as any).__skin_upload = () => fileRef.current?.click()
@@ -146,62 +147,67 @@ export const LayerPanel = () => {
                 >
                   <Icon name="star" color="#FFFBEA" size={10} />
                 </button>
+                <button
+                  className={`pixel-button compact ${openAdjustLayerId === l.id ? 'active' : ''}`}
+                  onClick={() =>
+                    setOpenAdjustLayerId((prev) => (prev === l.id ? null : l.id))
+                  }
+                  title="Show layer adjustments"
+                >
+                  FX
+                </button>
               </div>
-              <div className="px-2 pb-2 flex items-center gap-2">
-                <span className="panel-label opacity-80 shrink-0">Opacity</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={l.opacity}
-                  onChange={(e) => setOpacity(l.id, Number(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="panel-text w-10 text-right shrink-0">
-                  {Math.round(l.opacity * 100)}%
-                </span>
-              </div>
-              <div className="px-2 pb-2 space-y-2 border-t border-ink/20 pt-2 mx-2">
-                <div className="panel-label flex items-center justify-between">
-                  <span>Adjustments</span>
-                  {hasAdjust && (
-                    <button
-                      className="panel-text underline opacity-80 hover:opacity-100"
-                      onClick={() => resetAdjustments(l.id)}
-                    >
-                      Reset
-                    </button>
-                  )}
+              {openAdjustLayerId === l.id && (
+                <div className="px-2 pb-2 space-y-2 border-t border-ink/20 pt-2 mx-2">
+                  <div className="panel-label flex items-center justify-between">
+                    <span>Adjustments</span>
+                    {hasAdjust && (
+                      <button
+                        className="panel-text underline opacity-80 hover:opacity-100"
+                        onClick={() => resetAdjustments(l.id)}
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <AdjSlider
+                    label="Opacity"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={l.opacity}
+                    display={`${Math.round(l.opacity * 100)}%`}
+                    onChange={(v) => setOpacity(l.id, v)}
+                  />
+                  <AdjSlider
+                    label="Hue"
+                    min={-180}
+                    max={180}
+                    step={1}
+                    value={l.hue}
+                    display={`${l.hue}°`}
+                    onChange={(v) => setAdjustments(l.id, { hue: v })}
+                  />
+                  <AdjSlider
+                    label="Saturation"
+                    min={0}
+                    max={2}
+                    step={0.05}
+                    value={l.saturation}
+                    display={`${Math.round(l.saturation * 100)}%`}
+                    onChange={(v) => setAdjustments(l.id, { saturation: v })}
+                  />
+                  <AdjSlider
+                    label="Brightness"
+                    min={0}
+                    max={2}
+                    step={0.05}
+                    value={l.brightness}
+                    display={`${Math.round(l.brightness * 100)}%`}
+                    onChange={(v) => setAdjustments(l.id, { brightness: v })}
+                  />
                 </div>
-                <AdjSlider
-                  label="Hue"
-                  min={-180}
-                  max={180}
-                  step={1}
-                  value={l.hue}
-                  display={`${l.hue}°`}
-                  onChange={(v) => setAdjustments(l.id, { hue: v })}
-                />
-                <AdjSlider
-                  label="Saturation"
-                  min={0}
-                  max={2}
-                  step={0.05}
-                  value={l.saturation}
-                  display={`${Math.round(l.saturation * 100)}%`}
-                  onChange={(v) => setAdjustments(l.id, { saturation: v })}
-                />
-                <AdjSlider
-                  label="Brightness"
-                  min={0}
-                  max={2}
-                  step={0.05}
-                  value={l.brightness}
-                  display={`${Math.round(l.brightness * 100)}%`}
-                  onChange={(v) => setAdjustments(l.id, { brightness: v })}
-                />
-              </div>
+              )}
               <div className="px-2 pb-2 flex items-center gap-1 flex-wrap">
                 <button
                   className="pixel-button compact icon"
@@ -274,7 +280,7 @@ const AdjSlider = ({
       step={step}
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
-      className="flex-1"
+      className="flex-1 pixel-range"
     />
     <span className="panel-text w-12 text-right shrink-0">{display}</span>
   </div>

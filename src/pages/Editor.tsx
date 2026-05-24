@@ -43,10 +43,12 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
 
   const [name, setName] = useState('Untitled Skin')
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
-  const [animation, setAnimation] = useState<'walk' | 'idle' | 'wave' | 'none'>('walk')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [view, setView] = useState<'canvas' | 'preview'>('canvas')
   const [presetsOpen, setPresetsOpen] = useState(false)
+  const [utilityPanel, setUtilityPanel] = useState<
+    'tools' | 'colors' | 'layers' | 'preview'
+  >('tools')
 
   // Initial load - hydrate from gallery if editId is provided
   useEffect(() => {
@@ -155,8 +157,11 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     }
   }
 
+  const secondaryView: 'canvas' | 'preview' =
+    view === 'canvas' ? 'preview' : 'canvas'
+
   return (
-    <div className="h-full w-full p-2 sm:p-3 lg:p-4 grid gap-2 sm:gap-3 grid-rows-[auto_1fr] overflow-hidden min-h-0">
+    <div className="h-full w-full p-1 sm:p-2 lg:p-3 grid gap-2 grid-rows-[auto_1fr] overflow-hidden min-h-0">
       <EditorTopBar
         name={name}
         onName={setName}
@@ -167,80 +172,100 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         onDownload={handleDownload}
         onUpload={(f) => handleUpload(f)}
         fileInputRef={fileInputRef}
-        view={view}
-        setView={setView}
         presetsOpen={presetsOpen}
         setPresetsOpen={setPresetsOpen}
       />
 
-      {/* Layout:
-          - lg+: 4 columns (Tools | Canvas | Layers | Preview)
-          - md: 2 columns
-          - tablet/mobile: stacked tabs
-      */}
-      <div className="grid gap-3 min-h-0 grid-cols-1 md:grid-cols-[260px_1fr_280px] xl:grid-cols-[260px_1fr_280px_320px]">
-        <div className="hidden md:flex flex-col gap-3 min-h-0">
+      <div className="grid gap-2 min-h-0 grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)_280px_320px]">
+        <div className="hidden xl:flex flex-col gap-2 min-h-0">
           <ToolBar />
           <div className="min-h-[200px]">
             <ColorPicker />
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 min-h-0">
+        <div className="flex flex-col gap-2 min-h-0">
           <div className="pixel-window flex-1 min-h-0 flex flex-col">
             <div className="pixel-title-bar">
-              <span>{view === 'canvas' ? 'ATLAS // 64x64' : '3D PREVIEW'}</span>
-              <div className="ml-auto flex gap-1 md:hidden">
-                <button
+              <span>{view === 'canvas' ? 'ATLAS PAINT' : 'MODEL PAINT PREVIEW'}</span>
+              <div className="ml-auto flex gap-1">
+                <ViewButton
+                  active={view === 'canvas'}
+                  label="ATLAS"
                   onClick={() => setView('canvas')}
-                  className="pixel-button compact"
-                  style={{
-                    background: view === 'canvas' ? '#F5C04A' : 'transparent',
-                    color: view === 'canvas' ? '#2A2138' : '#F7E6CF',
-                    borderColor: view === 'canvas' ? '#2A2138' : '#F7E6CF',
-                  }}
-                >
-                  PAINT
-                </button>
-                <button
+                />
+                <ViewButton
+                  active={view === 'preview'}
+                  label="3D MODEL"
                   onClick={() => setView('preview')}
-                  className="pixel-button compact"
-                  style={{
-                    background: view === 'preview' ? '#F5C04A' : 'transparent',
-                    color: view === 'preview' ? '#2A2138' : '#F7E6CF',
-                    borderColor: view === 'preview' ? '#2A2138' : '#F7E6CF',
-                  }}
-                >
-                  3D
-                </button>
+                />
               </div>
             </div>
             <BodyPartTabs activePart={activePart} setActivePart={setActivePart} />
-            <div className="flex-1 min-h-0 p-3 bg-bg-desk2">
-              {view === 'canvas' ? (
-                <PixelCanvas model={model} partFilter={activePart as BodyPart | 'all'} />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center bg-bg-desk border-[3px] border-ink shadow-[6px_6px_0_0_#2A2138]">
-                  <SkinPreview
-                    imageUrl={previewDataUrl}
-                    model={model}
-                    width={320}
-                    height={480}
-                    pose={animation}
-                    rotate={animation !== 'none'}
-                    interactive
-                    zoom={0.95}
-                  />
+            <div className="flex-1 min-h-0 p-2 bg-bg-desk2">
+              <div className="h-full min-h-0 grid grid-rows-[minmax(0,1fr)_180px] md:grid-rows-[minmax(0,1fr)_220px] gap-2">
+                <WorkbenchPane
+                  kind={view}
+                  model={model}
+                  previewDataUrl={previewDataUrl}
+                  activePart={activePart}
+                />
+                <div className="pixel-window overflow-hidden min-h-0">
+                  <div className="pixel-title-bar !text-[9px] !py-2">
+                    <span>{secondaryView === 'canvas' ? 'ATLAS' : '3D MODEL'}</span>
+                    <button
+                      className="pixel-button compact ml-auto"
+                      onClick={() => setView(secondaryView)}
+                    >
+                      SWAP
+                    </button>
+                  </div>
+                  <div className="h-[calc(100%-36px)] min-h-0 p-1 bg-bg-desk2">
+                    <WorkbenchPane
+                      kind={secondaryView}
+                      model={model}
+                      previewDataUrl={previewDataUrl}
+                      activePart={activePart}
+                    />
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
-          <div className="md:hidden">
-            <ToolBar />
+
+          <div className="xl:hidden pixel-window">
+            <div className="px-2 py-2 bg-bg-desk border-b-[3px] border-ink flex gap-1 flex-wrap">
+              <UtilityButton
+                active={utilityPanel === 'tools'}
+                label="TOOLS"
+                onClick={() => setUtilityPanel('tools')}
+              />
+              <UtilityButton
+                active={utilityPanel === 'colors'}
+                label="COLORS"
+                onClick={() => setUtilityPanel('colors')}
+              />
+              <UtilityButton
+                active={utilityPanel === 'layers'}
+                label="LAYERS"
+                onClick={() => setUtilityPanel('layers')}
+              />
+              <UtilityButton
+                active={utilityPanel === 'preview'}
+                label="PREVIEW"
+                onClick={() => setUtilityPanel('preview')}
+              />
+            </div>
+            <div className="h-[38vh] min-h-[220px] max-h-[420px]">
+              {utilityPanel === 'tools' && <ToolBar />}
+              {utilityPanel === 'colors' && <ColorPicker />}
+              {utilityPanel === 'layers' && <LayerPanel />}
+              {utilityPanel === 'preview' && <MiniSkinPreview />}
+            </div>
           </div>
         </div>
 
-        <div className="hidden md:flex flex-col gap-3 min-h-0">
+        <div className="hidden xl:flex flex-col gap-2 min-h-0">
           <div className="flex-1 min-h-0">
             <LayerPanel />
           </div>
@@ -283,8 +308,6 @@ interface TopBarProps {
   onDownload: () => void
   onUpload: (f: File) => void
   fileInputRef: React.RefObject<HTMLInputElement>
-  view: 'canvas' | 'preview'
-  setView: (v: 'canvas' | 'preview') => void
   presetsOpen: boolean
   setPresetsOpen: (b: boolean) => void
 }
@@ -293,11 +316,7 @@ const EditorTopBar = (p: TopBarProps) => (
   <div className="pixel-window">
     <div className="pixel-title-bar">
       <span>EDITOR // /skins/</span>
-      <input
-        className="pixel-input ml-2 max-w-[200px]"
-        value={p.name}
-        onChange={(e) => p.onName(e.target.value)}
-      />
+      <input className="pixel-input ml-2 flex-1 min-w-0 max-w-[220px]" value={p.name} onChange={(e) => p.onName(e.target.value)} />
       <div className="ml-auto flex items-center gap-2 flex-wrap">
         <button
           onClick={() => p.setModel('slim')}
@@ -344,7 +363,7 @@ const EditorTopBar = (p: TopBarProps) => (
       >
         <Icon name="star" color="#FFFBEA" /> MY PRESETS
       </button>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1 sm:gap-2">
         <button
           onClick={p.onDownload}
           className="pixel-button compact teal flex items-center gap-1"
@@ -360,6 +379,74 @@ const EditorTopBar = (p: TopBarProps) => (
       </div>
     </div>
   </div>
+)
+
+const WorkbenchPane = ({
+  kind,
+  model,
+  previewDataUrl,
+  activePart,
+}: {
+  kind: 'canvas' | 'preview'
+  model: 'classic' | 'slim'
+  previewDataUrl: string | null
+  activePart: string
+}) => {
+  if (kind === 'canvas') {
+    return (
+      <div className="h-full min-h-0">
+        <PixelCanvas model={model} partFilter={activePart as BodyPart | 'all'} />
+      </div>
+    )
+  }
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-bg-desk border-[3px] border-ink shadow-[4px_4px_0_0_#2A2138]">
+      <SkinPreview
+        imageUrl={previewDataUrl}
+        model={model}
+        width={280}
+        height={360}
+        pose="none"
+        rotate={false}
+        interactive
+        zoom={0.95}
+      />
+    </div>
+  )
+}
+
+const ViewButton = ({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  onClick: () => void
+}) => (
+  <button
+    onClick={onClick}
+    className={`pixel-button compact ${active ? 'active' : ''}`}
+  >
+    {label}
+  </button>
+)
+
+const UtilityButton = ({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  onClick: () => void
+}) => (
+  <button
+    onClick={onClick}
+    className={`pixel-button compact ${active ? 'active' : ''}`}
+  >
+    {label}
+  </button>
 )
 
 const BodyPartTabs = ({
