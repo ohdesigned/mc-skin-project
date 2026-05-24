@@ -154,10 +154,10 @@ export const floodFill = (
 }
 
 // Soft tone tools: shade uses a dark purple multiply tint; lighten uses soft yellow screen.
-const SHADE_STRENGTH = 0.09
-const LIGHTEN_STRENGTH = 0.1
-const SHADE_PURPLE = { r: 52, g: 34, b: 72 }
-const LIGHTEN_YELLOW = { r: 255, g: 246, b: 196 }
+const SHADE_STRENGTH = 0.12
+const LIGHTEN_STRENGTH = 0.05
+const SHADE_PURPLE = { r: 88, g: 38, b: 132 }
+const LIGHTEN_YELLOW = { r: 255, g: 250, b: 210 }
 
 const applyShadeTone = (r: number, g: number, b: number): [number, number, number] => {
   const t = SHADE_STRENGTH
@@ -165,11 +165,9 @@ const applyShadeTone = (r: number, g: number, b: number): [number, number, numbe
   const mr = (r * pr) / 255
   const mg = (g * pg) / 255
   const mb = (b * pb) / 255
-  return [
-    Math.round(r + (mr - r) * t),
-    Math.round(g + (mg - g) * t),
-    Math.round(b + (mb - b) * t),
-  ]
+  const mix = (base: number, mul: number, tint: number) =>
+    Math.round(base + (mul - base) * t * 0.55 + (tint - base) * t * 0.45)
+  return [mix(r, mr, pr), mix(g, mg, pg), mix(b, mb, pb)]
 }
 
 const applyLightenTone = (r: number, g: number, b: number): [number, number, number] => {
