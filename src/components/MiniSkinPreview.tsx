@@ -30,8 +30,8 @@ export const MiniSkinPreview = () => {
           model={model}
           width={100}
           height={140}
-          pose="idle"
-          rotate
+          pose="none"
+          rotate={false}
           interactive
           zoom={0.88}
         />

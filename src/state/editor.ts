@@ -1,5 +1,21 @@
 import { create } from 'zustand'
-import { ModelKind } from '../skin/format'
+import { BodyPart, ModelKind } from '../skin/format'
+import type { PartLayerMode } from '../skin/partVisibility'
+
+const BASE_PART_KEYS: BodyPart[] = [
+  'head',
+  'body',
+  'right_arm',
+  'left_arm',
+  'right_leg',
+  'left_leg',
+]
+
+const emptyPartModes = (): Record<BodyPart, PartLayerMode> =>
+  Object.fromEntries(BASE_PART_KEYS.map((k) => [k, 0 as PartLayerMode])) as Record<
+    BodyPart,
+    PartLayerMode
+  >
 import {
   buildDefaultBase,
   cloneCanvas,
@@ -52,6 +68,7 @@ interface EditorState {
   showGrid: boolean
   showOnlyValid: boolean
   activePart: string // selected body part ("all" or BodyPart key)
+  partLayerModes: Record<BodyPart, PartLayerMode>
   history: HistoryEntry[]
   future: HistoryEntry[]
 
@@ -65,6 +82,8 @@ interface EditorState {
   toggleGrid: () => void
   toggleOnlyValid: () => void
   setActivePart: (k: string) => void
+  cyclePartLayerMode: (partKey: BodyPart) => void
+  resetPartLayerModes: () => void
   setActiveLayer: (id: string) => void
 
   addBlankLayer: (name?: string) => void
@@ -148,6 +167,7 @@ export const useEditor = create<EditorState>((set, get) => {
     showGrid: true,
     showOnlyValid: true,
     activePart: 'all',
+    partLayerModes: emptyPartModes(),
     history: [],
     future: [],
 
@@ -164,6 +184,17 @@ export const useEditor = create<EditorState>((set, get) => {
     toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
     toggleOnlyValid: () => set((s) => ({ showOnlyValid: !s.showOnlyValid })),
     setActivePart: (k) => set({ activePart: k }),
+    cyclePartLayerMode: (partKey) =>
+      set((s) => {
+        const cur = s.partLayerModes[partKey] ?? 0
+        const next = ((cur + 1) % 3) as PartLayerMode
+        return {
+          activePart: partKey,
+          partLayerModes: { ...s.partLayerModes, [partKey]: next },
+        }
+      }),
+    resetPartLayerModes: () =>
+      set({ partLayerModes: emptyPartModes(), activePart: 'all' }),
     setActiveLayer: (id) => set({ activeLayerId: id }),
 
     addBlankLayer: (name = 'Layer') => {
@@ -412,6 +443,8 @@ export const useEditor = create<EditorState>((set, get) => {
         model: m,
         history: [],
         future: [],
+        partLayerModes: emptyPartModes(),
+        activePart: 'all',
       })
     },
 
@@ -443,6 +476,8 @@ export const useEditor = create<EditorState>((set, get) => {
         activeLayerId: paint.id,
         history: [],
         future: [],
+        partLayerModes: emptyPartModes(),
+        activePart: 'all',
       })
     },
   }

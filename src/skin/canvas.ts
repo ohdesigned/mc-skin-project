@@ -143,8 +143,44 @@ export const paintPart = (
   ctx.fillRect(rect.x, rect.y, rect.w, rect.h)
 }
 
-// Minimal aesthetic mannequin — pale skin with soft shading, no clothing.
-// Used as the default slim starting skin and as the backdrop for preset previews.
+// Blockbench-style template: solid color per body part on the inner layer.
+export const buildBlockbenchBase = (model: ModelKind): HTMLCanvasElement => {
+  const c = createCanvas()
+  const ctx = getCtx(c)
+  ctx.clearRect(0, 0, c.width, c.height)
+  const parts = partsFor(model)
+
+  const colors: Partial<Record<BodyPart, string>> = {
+    head: '#3BCEFF',
+    body: '#7FFF7F',
+    right_arm: '#FF7F7F',
+    left_arm: '#FFBF7F',
+    right_leg: '#7F7FFF',
+    left_leg: '#FF7FFF',
+  }
+
+  for (const key of [
+    'head',
+    'body',
+    'right_arm',
+    'left_arm',
+    'right_leg',
+    'left_leg',
+  ] as BodyPart[]) {
+    const color = colors[key]!
+    for (const face of Object.values(parts[key])) {
+      ctx.fillStyle = color
+      ctx.fillRect(face.x, face.y, face.w, face.h)
+    }
+  }
+  return c
+}
+
+// Default starting skin — Blockbench-style color blocks per body part.
+export const buildDefaultBase = (model: ModelKind): HTMLCanvasElement =>
+  buildBlockbenchBase(model)
+
+// Minimal aesthetic mannequin used for preset previews.
 export const buildMannequinBase = (model: ModelKind): HTMLCanvasElement => {
   const c = createCanvas()
   const ctx = getCtx(c)
@@ -176,9 +212,8 @@ export const buildMannequinBase = (model: ModelKind): HTMLCanvasElement => {
   return c
 }
 
-// Back-compat alias — always builds the aesthetic mannequin for the given model.
-export const buildDefaultBase = (model: ModelKind): HTMLCanvasElement =>
-  buildMannequinBase(model)
+// Back-compat alias for preset previews.
+export const buildMannequinPreviewBase = buildMannequinBase
 
 // Sample a single pixel as #rrggbbaa string
 export const pickPixel = (c: HTMLCanvasElement, x: number, y: number): string => {

@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditor } from '../state/editor'
 import { useGallery } from '../state/gallery'
-import { PixelCanvas } from '../components/PixelCanvas'
 import { LayerPanel } from '../components/LayerPanel'
 import { MiniSkinPreview } from '../components/MiniSkinPreview'
 import { ToolBar } from '../components/ToolBar'
 import { ColorPicker } from '../components/ColorPicker'
 import { PresetsPanel } from '../components/PresetsPanel'
-import { SkinPreview } from '../components/SkinPreview'
+import { SkinPaintCanvas } from '../components/SkinPaintCanvas'
 import { Icon } from '../components/Icon'
 import { BODY_PART_GROUPS, BodyPart } from '../skin/format'
 import { useConfirm } from '../state/dialogs'
@@ -17,6 +16,7 @@ import {
   downloadCanvas,
   toDataURL,
 } from '../skin/canvas'
+import { PART_LAYER_MODE_LABEL, type PartLayerMode } from '../skin/partVisibility'
 
 interface Props {
   editId?: string
@@ -31,8 +31,10 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   const reset = useEditor((s) => s.reset)
   const loadSkinAsBase = useEditor((s) => s.loadSkinAsBase)
   const setTool = useEditor((s) => s.setTool)
-  const setActivePart = useEditor((s) => s.setActivePart)
   const activePart = useEditor((s) => s.activePart)
+  const partLayerModes = useEditor((s) => s.partLayerModes)
+  const cyclePartLayerMode = useEditor((s) => s.cyclePartLayerMode)
+  const resetPartLayerModes = useEditor((s) => s.resetPartLayerModes)
   const undo = useEditor((s) => s.undo)
   const redo = useEditor((s) => s.redo)
   const { askConfirm } = useConfirm()
@@ -42,15 +44,12 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   const updateSkin = useGallery((s) => s.update)
 
   const [name, setName] = useState('Untitled Skin')
-  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [view, setView] = useState<'canvas' | 'preview'>('canvas')
   const [presetsOpen, setPresetsOpen] = useState(false)
   const [utilityPanel, setUtilityPanel] = useState<
     'tools' | 'colors' | 'layers' | 'preview'
   >('tools')
 
-  // Initial load - hydrate from gallery if editId is provided
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -74,26 +73,6 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId])
 
-  // Live preview composition. Throttled with rAF + ~80ms backoff so we don't
-  // re-encode a PNG on every pixel of a fast drag.
-  useEffect(() => {
-    let raf = 0
-    let timeout: number | null = null
-    const tick = () => {
-      const composite = compositeLayers(layers)
-      setPreviewDataUrl(toDataURL(composite))
-      raf = 0
-    }
-    timeout = window.setTimeout(() => {
-      raf = requestAnimationFrame(tick)
-    }, 60)
-    return () => {
-      if (raf) cancelAnimationFrame(raf)
-      if (timeout) clearTimeout(timeout)
-    }
-  }, [layers])
-
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return
@@ -121,7 +100,7 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   }, [setTool, undo, redo])
 
   const handleSave = async () => {
-    if (!previewDataUrl) return
+    const dataUrl = toDataURL(compositeLayers(layers))
     const ok = await askConfirm({
       title: 'Save Skin',
       message: `Save "${name}" to your gallery?`,
@@ -129,9 +108,9 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     })
     if (!ok) return
     if (editId) {
-      updateSkin(editId, { name, model, dataUrl: previewDataUrl })
+      updateSkin(editId, { name, model, dataUrl })
     } else {
-      saveSkin({ name, model, dataUrl: previewDataUrl })
+      saveSkin({ name, model, dataUrl })
     }
     onSaved(name)
   }
@@ -143,22 +122,17 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
       confirmLabel: 'Download',
     })
     if (!ok) return
-    const composite = compositeLayers(layers)
-    downloadCanvas(composite, name || 'minecraft-skin')
+    downloadCanvas(compositeLayers(layers), name || 'minecraft-skin')
   }
 
   const handleUpload = async (file: File) => {
     try {
       const c = await dataUrlToCanvas(URL.createObjectURL(file))
-      // First file becomes "uploaded as new layer". We don't replace base.
       useEditor.getState().addLayerFromCanvas(c, file.name.replace(/\.[^.]+$/, ''))
     } catch (e) {
       console.warn(e)
     }
   }
-
-  const secondaryView: 'canvas' | 'preview' =
-    view === 'canvas' ? 'preview' : 'canvas'
 
   return (
     <div className="h-full w-full p-1 sm:p-2 lg:p-3 grid gap-2 grid-rows-[auto_1fr] overflow-hidden min-h-0">
@@ -179,57 +153,27 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
       <div className="grid gap-2 min-h-0 grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)_280px_320px]">
         <div className="hidden xl:flex flex-col gap-2 min-h-0">
           <ToolBar />
-          <div className="min-h-[200px]">
+          <div className="min-h-[200px] flex-1 min-h-0">
             <ColorPicker />
           </div>
         </div>
 
         <div className="flex flex-col gap-2 min-h-0">
           <div className="pixel-window flex-1 min-h-0 flex flex-col">
-            <div className="pixel-title-bar">
-              <span>{view === 'canvas' ? 'ATLAS PAINT' : 'MODEL PAINT PREVIEW'}</span>
-              <div className="ml-auto flex gap-1">
-                <ViewButton
-                  active={view === 'canvas'}
-                  label="ATLAS"
-                  onClick={() => setView('canvas')}
-                />
-                <ViewButton
-                  active={view === 'preview'}
-                  label="3D MODEL"
-                  onClick={() => setView('preview')}
-                />
-              </div>
+            <div className="pixel-title-bar flex-wrap gap-y-1">
+              <span>MODEL PAINT</span>
+              <span className="ml-auto panel-label text-accent-cream/80 text-sm">
+                Tap/click paint · Right-click rotate · Scroll/pinch zoom
+              </span>
             </div>
-            <BodyPartTabs activePart={activePart} setActivePart={setActivePart} />
+            <BodyPartTabs
+              activePart={activePart}
+              partLayerModes={partLayerModes}
+              onAll={() => resetPartLayerModes()}
+              onPart={(key) => cyclePartLayerMode(key)}
+            />
             <div className="flex-1 min-h-0 p-2 bg-bg-desk2">
-              <div className="h-full min-h-0 grid grid-rows-[minmax(0,1fr)_180px] md:grid-rows-[minmax(0,1fr)_220px] gap-2">
-                <WorkbenchPane
-                  kind={view}
-                  model={model}
-                  previewDataUrl={previewDataUrl}
-                  activePart={activePart}
-                />
-                <div className="pixel-window overflow-hidden min-h-0">
-                  <div className="pixel-title-bar !text-[9px] !py-2">
-                    <span>{secondaryView === 'canvas' ? 'ATLAS' : '3D MODEL'}</span>
-                    <button
-                      className="pixel-button compact ml-auto"
-                      onClick={() => setView(secondaryView)}
-                    >
-                      SWAP
-                    </button>
-                  </div>
-                  <div className="h-[calc(100%-36px)] min-h-0 p-1 bg-bg-desk2">
-                    <WorkbenchPane
-                      kind={secondaryView}
-                      model={model}
-                      previewDataUrl={previewDataUrl}
-                      activePart={activePart}
-                    />
-                  </div>
-                </div>
-              </div>
+              <SkinPaintCanvas model={model} />
             </div>
           </div>
 
@@ -277,7 +221,6 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
         </div>
       </div>
 
-      {/* Presets slide-out (for screens < xl) */}
       {presetsOpen && (
         <div className="fixed inset-0 z-40 bg-bg-deep/70 grid place-items-center p-4 xl:hidden">
           <div className="w-[640px] max-w-[96vw] h-[80vh]">
@@ -293,7 +236,6 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
           </div>
         </div>
       )}
-
     </div>
   )
 }
@@ -316,7 +258,11 @@ const EditorTopBar = (p: TopBarProps) => (
   <div className="pixel-window">
     <div className="pixel-title-bar">
       <span>EDITOR // /skins/</span>
-      <input className="pixel-input ml-2 flex-1 min-w-0 max-w-[220px]" value={p.name} onChange={(e) => p.onName(e.target.value)} />
+      <input
+        className="pixel-input ml-2 flex-1 min-w-0 max-w-[220px]"
+        value={p.name}
+        onChange={(e) => p.onName(e.target.value)}
+      />
       <div className="ml-auto flex items-center gap-2 flex-wrap">
         <button
           onClick={() => p.setModel('slim')}
@@ -381,57 +327,6 @@ const EditorTopBar = (p: TopBarProps) => (
   </div>
 )
 
-const WorkbenchPane = ({
-  kind,
-  model,
-  previewDataUrl,
-  activePart,
-}: {
-  kind: 'canvas' | 'preview'
-  model: 'classic' | 'slim'
-  previewDataUrl: string | null
-  activePart: string
-}) => {
-  if (kind === 'canvas') {
-    return (
-      <div className="h-full min-h-0">
-        <PixelCanvas model={model} partFilter={activePart as BodyPart | 'all'} />
-      </div>
-    )
-  }
-  return (
-    <div className="h-full w-full flex items-center justify-center bg-bg-desk border-[3px] border-ink shadow-[4px_4px_0_0_#2A2138]">
-      <SkinPreview
-        imageUrl={previewDataUrl}
-        model={model}
-        width={280}
-        height={360}
-        pose="none"
-        rotate={false}
-        interactive
-        zoom={0.95}
-      />
-    </div>
-  )
-}
-
-const ViewButton = ({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean
-  label: string
-  onClick: () => void
-}) => (
-  <button
-    onClick={onClick}
-    className={`pixel-button compact ${active ? 'active' : ''}`}
-  >
-    {label}
-  </button>
-)
-
 const UtilityButton = ({
   active,
   label,
@@ -451,41 +346,57 @@ const UtilityButton = ({
 
 const BodyPartTabs = ({
   activePart,
-  setActivePart,
+  partLayerModes,
+  onAll,
+  onPart,
 }: {
   activePart: string
-  setActivePart: (p: string) => void
+  partLayerModes: Record<BodyPart, PartLayerMode>
+  onAll: () => void
+  onPart: (key: BodyPart) => void
 }) => (
   <div className="px-2 py-2 border-b-[3px] border-ink bg-bg-desk overflow-x-auto pixel-scroll flex items-center gap-1">
-    <PartTab
-      label="ALL"
-      active={activePart === 'all'}
-      onClick={() => setActivePart('all')}
-    />
-    {BODY_PART_GROUPS.map((g) => (
-      <PartTab
-        key={g.key}
-        label={g.label.toUpperCase()}
-        active={activePart === g.key}
-        onClick={() => setActivePart(g.key)}
-      />
-    ))}
+    <PartTab label="ALL" badge="" active={activePart === 'all'} onClick={onAll} />
+    {BODY_PART_GROUPS.map((g) => {
+      const mode = partLayerModes[g.key] ?? 0
+      return (
+        <PartTab
+          key={g.key}
+          label={g.label.toUpperCase()}
+          badge={PART_LAYER_MODE_LABEL[mode]}
+          active={activePart === g.key}
+          onClick={() => onPart(g.key)}
+        />
+      )
+    })}
   </div>
 )
 
 const PartTab = ({
   label,
+  badge,
   active,
   onClick,
 }: {
   label: string
+  badge: string
   active: boolean
   onClick: () => void
 }) => (
   <button
     onClick={onClick}
-    className={`pixel-button compact ${active ? 'active' : ''} whitespace-nowrap`}
+    className={`pixel-button compact ${active ? 'active' : ''} whitespace-nowrap flex items-center gap-1`}
+    title={
+      badge === 'OUT'
+        ? 'Outer layer hidden — click again'
+        : badge === 'OFF'
+          ? 'Both layers hidden — click to restore'
+          : 'Click to hide outer layer on this part'
+    }
   >
     <span style={{ fontSize: 8 }}>{label}</span>
+    {badge && (
+      <span className="panel-btn-text text-[10px] opacity-90">{badge}</span>
+    )}
   </button>
 )
