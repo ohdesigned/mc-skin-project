@@ -7,6 +7,7 @@ import { applyPartLayerModes } from '../skin/partVisibility'
 import { buildPaintTargets, raycastSkin } from '../skin/raycastPaint'
 import { applyToolAtPixel, strokeToolLine } from '../skin/paintAtPixel'
 import { useEditor } from '../state/editor'
+import { CharacterPreviewFrame } from './CharacterPreviewFrame'
 
 interface Props {
   model: ModelKind
@@ -20,8 +21,8 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
   const [failed, setFailed] = useState(false)
 
   const layers = useEditor((s) => s.layers)
-  const activePart = useEditor((s) => s.activePart)
   const partLayerModes = useEditor((s) => s.partLayerModes)
+  const previewBackground = useEditor((s) => s.previewBackground)
   const tool = useEditor((s) => s.tool)
   const color = useEditor((s) => s.color)
   const pushRecentColor = useEditor((s) => s.pushRecentColor)
@@ -74,12 +75,12 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
       viewer.controls.enableZoom = true
       viewer.controls.enableRotate = true
       viewer.controls.mouseButtons = {
-        LEFT: null as unknown as MOUSE,
+        LEFT: MOUSE.ROTATE,
         MIDDLE: MOUSE.DOLLY,
         RIGHT: MOUSE.ROTATE,
       }
       viewer.controls.touches = {
-        ONE: null as unknown as TOUCH,
+        ONE: TOUCH.ROTATE,
         TWO: TOUCH.DOLLY_ROTATE,
       }
 
@@ -124,31 +125,26 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
 
   const toolRef = useRef(tool)
   const colorRef = useRef(color)
-  const activePartRef = useRef(activePart)
   const partLayerModesRef = useRef(partLayerModes)
   toolRef.current = tool
   colorRef.current = color
-  activePartRef.current = activePart
   partLayerModesRef.current = partLayerModes
 
-  const paintAt = (clientX: number, clientY: number) => {
+  const raycastAt = (clientX: number, clientY: number) => {
     const viewer = viewerRef.current
-    const composite = compositeRef.current
-    if (!viewer || !composite) return null
+    if (!viewer) return null
 
     const targets = buildPaintTargets(
       viewer.playerObject.skin,
       partLayerModesRef.current,
     )
-    const hit = raycastSkin(
-      viewer.camera,
-      viewer.canvas,
-      clientX,
-      clientY,
-      targets,
-      activePartRef.current,
-    )
-    if (!hit) return null
+    return raycastSkin(viewer.camera, viewer.canvas, clientX, clientY, targets)
+  }
+
+  const paintAt = (clientX: number, clientY: number) => {
+    const composite = compositeRef.current
+    const hit = raycastAt(clientX, clientY)
+    if (!hit || !composite) return null
 
     const changed = applyToolAtPixel(hit.px, hit.py, composite)
     if (changed && toolRef.current !== 'eyedropper' && toolRef.current !== 'fill') {
@@ -164,6 +160,12 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
 
     const down = (e: PointerEvent) => {
       if (e.button !== 0) return
+      const hit = raycastAt(e.clientX, e.clientY)
+      if (!hit) {
+        paintingRef.current = false
+        viewer.controls.enabled = true
+        return
+      }
       e.preventDefault()
       e.stopPropagation()
       canvas.setPointerCapture(e.pointerId)
@@ -172,8 +174,8 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
       paintingRef.current = true
       didChangeRef.current = false
       lastPixelRef.current = null
-      const hit = paintAt(e.clientX, e.clientY)
-      if (hit) lastPixelRef.current = { x: hit.px, y: hit.py }
+      const painted = paintAt(e.clientX, e.clientY)
+      if (painted) lastPixelRef.current = { x: painted.px, y: painted.py }
     }
 
     const move = (e: PointerEvent) => {
@@ -222,10 +224,16 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={`h-full w-full min-h-0 bg-bg-desk border-[3px] border-ink shadow-[4px_4px_0_0_#2A2138] ${className ?? ''}`}
-      style={{ touchAction: 'none' }}
-    />
+    <CharacterPreviewFrame
+      backgroundId={previewBackground}
+      className={`border-[3px] border-ink shadow-[4px_4px_0_0_#2A2138] ${className ?? ''}`}
+      inset={12}
+    >
+      <div
+        ref={containerRef}
+        className="h-full w-full min-h-0"
+        style={{ touchAction: 'none' }}
+      />
+    </CharacterPreviewFrame>
   )
 }

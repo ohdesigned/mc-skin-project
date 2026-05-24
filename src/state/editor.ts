@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { BodyPart, ModelKind } from '../skin/format'
 import type { PartLayerMode } from '../skin/partVisibility'
+import type { PreviewBackgroundId } from '../skin/previewBackgrounds'
 
 const BASE_PART_KEYS: BodyPart[] = [
   'head',
@@ -69,6 +70,7 @@ interface EditorState {
   showOnlyValid: boolean
   activePart: string // selected body part ("all" or BodyPart key)
   partLayerModes: Record<BodyPart, PartLayerMode>
+  previewBackground: PreviewBackgroundId
   history: HistoryEntry[]
   future: HistoryEntry[]
 
@@ -84,6 +86,7 @@ interface EditorState {
   setActivePart: (k: string) => void
   cyclePartLayerMode: (partKey: BodyPart) => void
   resetPartLayerModes: () => void
+  setPreviewBackground: (id: PreviewBackgroundId) => void
   setActiveLayer: (id: string) => void
 
   addBlankLayer: (name?: string) => void
@@ -168,6 +171,7 @@ export const useEditor = create<EditorState>((set, get) => {
     showOnlyValid: true,
     activePart: 'all',
     partLayerModes: emptyPartModes(),
+    previewBackground: 'valley-birch',
     history: [],
     future: [],
 
@@ -195,6 +199,7 @@ export const useEditor = create<EditorState>((set, get) => {
       }),
     resetPartLayerModes: () =>
       set({ partLayerModes: emptyPartModes(), activePart: 'all' }),
+    setPreviewBackground: (id) => set({ previewBackground: id }),
     setActiveLayer: (id) => set({ activeLayerId: id }),
 
     addBlankLayer: (name = 'Layer') => {

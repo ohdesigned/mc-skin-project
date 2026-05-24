@@ -7,6 +7,7 @@ import { ToolBar } from '../components/ToolBar'
 import { ColorPicker } from '../components/ColorPicker'
 import { PresetsPanel } from '../components/PresetsPanel'
 import { SkinPaintCanvas } from '../components/SkinPaintCanvas'
+import { PreviewBackgroundPicker } from '../components/PreviewBackgroundPicker'
 import { Icon } from '../components/Icon'
 import { BODY_PART_GROUPS, BodyPart } from '../skin/format'
 import { useConfirm } from '../state/dialogs'
@@ -172,6 +173,7 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
               onAll={() => resetPartLayerModes()}
               onPart={(key) => cyclePartLayerMode(key)}
             />
+            <PreviewBackgroundPicker />
             <div className="flex-1 min-h-0 p-2 bg-bg-desk2">
               <SkinPaintCanvas model={model} />
             </div>

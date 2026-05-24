@@ -7,6 +7,7 @@ import { SkinPreview } from './SkinPreview'
 export const MiniSkinPreview = () => {
   const layers = useEditor((s) => s.layers)
   const model = useEditor((s) => s.model)
+  const previewBackground = useEditor((s) => s.previewBackground)
   const [url, setUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -21,10 +22,7 @@ export const MiniSkinPreview = () => {
       <div className="pixel-title-bar">
         <span>PREVIEW</span>
       </div>
-      <div
-        className="p-2 flex justify-center"
-        style={{ background: 'linear-gradient(180deg, #E9D6B4 0%, #C9AC7E 100%)' }}
-      >
+      <div className="p-2 flex justify-center bg-bg-desk2">
         <SkinPreview
           imageUrl={url}
           model={model}
@@ -34,6 +32,7 @@ export const MiniSkinPreview = () => {
           rotate={false}
           interactive
           zoom={0.88}
+          backgroundId={previewBackground}
         />
       </div>
     </div>

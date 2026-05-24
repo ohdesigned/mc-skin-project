@@ -68,24 +68,12 @@ export const uvToSkinPixel = (u: number, v: number): { px: number; py: number } 
   return { px, py }
 }
 
-export const partMatchesFilter = (
-  atlasPart: BodyPart,
-  activePart: string,
-): boolean => {
-  if (activePart === 'all') return true
-  if (atlasPart === activePart) return true
-  const overlay = OVERLAY_FOR[activePart as BodyPart]
-  if (overlay && atlasPart === overlay) return true
-  return false
-}
-
 export const raycastSkin = (
   camera: PerspectiveCamera,
   canvas: HTMLCanvasElement,
   clientX: number,
   clientY: number,
   targets: PartMeshEntry[],
-  activePart: string,
 ): SkinHit | null => {
   const rect = canvas.getBoundingClientRect()
   const ndc = new Vector2(
@@ -104,7 +92,6 @@ export const raycastSkin = (
     const overlayKey = `${entry.bodyPart}_overlay` as BodyPart
     const atlasPart: BodyPart =
       entry.layer === 'outer' ? (OVERLAY_FOR[entry.bodyPart] ?? overlayKey) : entry.bodyPart
-    if (!partMatchesFilter(atlasPart, activePart)) continue
 
     const { px, py } = uvToSkinPixel(hit.uv.x, hit.uv.y)
     return { px, py, bodyPart: atlasPart, layer: entry.layer }

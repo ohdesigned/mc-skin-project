@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import * as skinview3d from 'skinview3d'
 import { ModelKind } from '../skin/format'
+import type { PreviewBackgroundId } from '../skin/previewBackgrounds'
+import { CharacterPreviewFrame } from './CharacterPreviewFrame'
 
 interface Props {
   imageUrl: string | null
@@ -11,6 +13,7 @@ interface Props {
   rotate?: boolean
   interactive?: boolean
   zoom?: number
+  backgroundId?: PreviewBackgroundId
   className?: string
 }
 
@@ -23,6 +26,7 @@ export const SkinPreview = ({
   rotate = true,
   interactive = false,
   zoom = 0.95,
+  backgroundId = 'valley-birch',
   className,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -122,10 +126,13 @@ export const SkinPreview = ({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ width, height, lineHeight: 0 }}
-    />
+    <div style={{ width, height }} className={className}>
+      <CharacterPreviewFrame backgroundId={backgroundId} inset={4}>
+        <div
+          ref={containerRef}
+          style={{ width: '100%', height: '100%', lineHeight: 0 }}
+        />
+      </CharacterPreviewFrame>
+    </div>
   )
 }

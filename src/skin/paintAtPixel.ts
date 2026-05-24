@@ -54,7 +54,7 @@ export const applyToolAtPixel = (
   const activeLayer = state.layers.find((l) => l.id === state.activeLayerId)
   if (!activeLayer || activeLayer.locked) return false
 
-  const scopedMask = getScopedMask(state.model, state.activePart)
+  const scopedMask = validMaskFor(state.model)
   if (!scopedMask[py * SKIN_W + px]) return false
 
   const { tool, color, brushSize, mirror, setColor, pushRecentColor, setTool } = state
