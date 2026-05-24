@@ -153,12 +153,59 @@ export const floodFill = (
   ctx.putImageData(img, 0, 0)
 }
 
-// Adjust lightness of existing pixel (used by shade/lighten tool).
+// Soft tone tools: shade uses a dark purple multiply tint; lighten uses soft yellow screen.
+const SHADE_STRENGTH = 0.09
+const LIGHTEN_STRENGTH = 0.1
+const SHADE_PURPLE = { r: 52, g: 34, b: 72 }
+const LIGHTEN_YELLOW = { r: 255, g: 246, b: 196 }
+
+const applyShadeTone = (r: number, g: number, b: number): [number, number, number] => {
+  const t = SHADE_STRENGTH
+  const { r: pr, g: pg, b: pb } = SHADE_PURPLE
+  const mr = (r * pr) / 255
+  const mg = (g * pg) / 255
+  const mb = (b * pb) / 255
+  return [
+    Math.round(r + (mr - r) * t),
+    Math.round(g + (mg - g) * t),
+    Math.round(b + (mb - b) * t),
+  ]
+}
+
+const applyLightenTone = (r: number, g: number, b: number): [number, number, number] => {
+  const t = LIGHTEN_STRENGTH
+  const { r: yr, g: yg, b: yb } = LIGHTEN_YELLOW
+  const sr = 255 - ((255 - r) * (255 - yr)) / 255
+  const sg = 255 - ((255 - g) * (255 - yg)) / 255
+  const sb = 255 - ((255 - b) * (255 - yb)) / 255
+  return [
+    Math.round(r + (sr - r) * t),
+    Math.round(g + (sg - g) * t),
+    Math.round(b + (sb - b) * t),
+  ]
+}
+
+const toneAt = (
+  data: Uint8ClampedArray,
+  px: number,
+  py: number,
+  mode: 'shade' | 'lighten',
+) => {
+  const i = (py * SKIN_W + px) * 4
+  if (data[i + 3] === 0) return
+  const [nr, ng, nb] =
+    mode === 'shade'
+      ? applyShadeTone(data[i], data[i + 1], data[i + 2])
+      : applyLightenTone(data[i], data[i + 1], data[i + 2])
+  data[i] = nr
+  data[i + 1] = ng
+  data[i + 2] = nb
+}
+
 export const shadePixel = (
   c: HTMLCanvasElement,
   x: number,
   y: number,
-  delta: number, // -1..+1, negative = darker
   size = 1,
   validMask?: Uint8Array,
 ) => {
@@ -172,12 +219,30 @@ export const shadePixel = (
       const py = y - half + dy
       if (px < 0 || py < 0 || px >= SKIN_W || py >= SKIN_H) continue
       if (validMask && !validMask[py * SKIN_W + px]) continue
-      const i = (py * SKIN_W + px) * 4
-      if (data[i + 3] === 0) continue // skip transparent
-      const k = 1 + delta
-      data[i] = Math.max(0, Math.min(255, Math.round(data[i] * k)))
-      data[i + 1] = Math.max(0, Math.min(255, Math.round(data[i + 1] * k)))
-      data[i + 2] = Math.max(0, Math.min(255, Math.round(data[i + 2] * k)))
+      toneAt(data, px, py, 'shade')
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+}
+
+export const lightenPixel = (
+  c: HTMLCanvasElement,
+  x: number,
+  y: number,
+  size = 1,
+  validMask?: Uint8Array,
+) => {
+  const ctx = getCtx(c)
+  const img = ctx.getImageData(0, 0, SKIN_W, SKIN_H)
+  const data = img.data
+  const half = Math.floor(size / 2)
+  for (let dy = 0; dy < size; dy++) {
+    for (let dx = 0; dx < size; dx++) {
+      const px = x - half + dx
+      const py = y - half + dy
+      if (px < 0 || py < 0 || px >= SKIN_W || py >= SKIN_H) continue
+      if (validMask && !validMask[py * SKIN_W + px]) continue
+      toneAt(data, px, py, 'lighten')
     }
   }
   ctx.putImageData(img, 0, 0)

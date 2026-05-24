@@ -5,6 +5,7 @@ import {
   erasePixel,
   floodFill,
   shadePixel,
+  lightenPixel,
   lineStroke,
 } from './tools'
 import { useEditor } from '../state/editor'
@@ -87,9 +88,9 @@ export const applyToolAtPixel = (
     } else if (tool === 'eraser') {
       erasePixel(activeLayer.canvas, px, py, brushSize, mirror)
     } else if (tool === 'shade') {
-      shadePixel(activeLayer.canvas, px, py, -0.15, brushSize, scopedMask)
+      shadePixel(activeLayer.canvas, px, py, brushSize, scopedMask)
     } else if (tool === 'lighten') {
-      shadePixel(activeLayer.canvas, px, py, +0.18, brushSize, scopedMask)
+      lightenPixel(activeLayer.canvas, px, py, brushSize, scopedMask)
     }
     useEditor.setState((s) => ({ layers: [...s.layers] }))
   }

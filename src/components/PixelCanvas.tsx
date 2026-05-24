@@ -14,6 +14,7 @@ import {
   erasePixel,
   floodFill,
   shadePixel,
+  lightenPixel,
   lineStroke,
 } from '../skin/tools'
 import { useEditor } from '../state/editor'
@@ -196,9 +197,9 @@ export const PixelCanvas = ({ model, partFilter = 'all' }: Props) => {
       } else if (tool === 'eraser') {
         erasePixel(cv, px, py, brushSize, mirror)
       } else if (tool === 'shade') {
-        shadePixel(cv, px, py, -0.15, brushSize, scopedMask)
+        shadePixel(cv, px, py, brushSize, scopedMask)
       } else if (tool === 'lighten') {
-        shadePixel(cv, px, py, +0.18, brushSize, scopedMask)
+        lightenPixel(cv, px, py, brushSize, scopedMask)
       }
       didChangeRef.current = true
       // Trigger a re-render by mutating layers reference
