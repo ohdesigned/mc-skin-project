@@ -4,39 +4,34 @@ import { fileURLToPath, URL } from 'node:url'
 import { copyFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// GitHub Pages project sites live at https://<user>.github.io/<repo>/
-// Relative base (`./`) keeps asset URLs working when opened from search engines
-// and browsers without relying on a hard-coded subpath.
 const repoName = 'mc-skin-project'
+const ghPagesBase = `/${repoName}/`
 
 /** After build, copy index.html → 404.html so GitHub Pages serves the SPA. */
-const ghPages404 = (): Plugin => ({
+const ghPages404 = (outDir: string): Plugin => ({
   name: 'gh-pages-404',
   closeBundle() {
-    const dist = resolve(process.cwd(), 'dist')
+    const dist = resolve(process.cwd(), outDir)
     copyFileSync(resolve(dist, 'index.html'), resolve(dist, '404.html'))
   },
 })
 
-export default defineConfig(({ mode }) => ({
-  base: mode === 'ghpages' ? './' : '/',
-  plugins: [
-    react(),
-    ...(mode === 'ghpages' ? [ghPages404()] : []),
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+export default defineConfig(({ mode }) => {
+  const isPages = mode === 'ghpages'
+  const outDir = isPages ? 'docs' : 'dist'
+
+  return {
+    base: isPages ? ghPagesBase : '/',
+    build: { outDir },
+    plugins: [react(), ...(isPages ? [ghPages404(outDir)] : [])],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
     },
-  },
-  server: {
-    host: true,
-    port: 5173,
-  },
-  define: {
-    __APP_BASE__: JSON.stringify(mode === 'ghpages' ? `./` : '/'),
-    __REPO_PAGES_URL__: JSON.stringify(
-      `https://ohdesigned.github.io/${repoName}/`,
-    ),
-  },
-}))
+    server: {
+      host: true,
+      port: 5173,
+    },
+  }
+})

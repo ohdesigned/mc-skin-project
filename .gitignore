@@ -5,3 +5,5 @@ dist
 tsconfig.tsbuildinfo
 .env
 .env.*
+
+# docs/ is the committed GitHub Pages build output — do NOT ignore it.
