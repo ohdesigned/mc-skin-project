@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as skinview3d from 'skinview3d'
 import { ModelKind } from '../skin/format'
 import type { PreviewBackgroundId } from '../skin/previewBackgrounds'
+import { enableSkinAlphaMaterials } from '../skin/skinViewer'
 import { CharacterPreviewFrame } from './CharacterPreviewFrame'
 
 interface Props {
@@ -70,6 +71,7 @@ export const SkinPreview = ({
         viewer.animation = null
       }
       viewerRef.current = viewer
+      enableSkinAlphaMaterials(viewer)
     } catch (e) {
       console.warn('SkinViewer init failed (likely no WebGL):', e)
       setFailed(true)

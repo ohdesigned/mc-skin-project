@@ -105,9 +105,13 @@ export const layerToDataUrl = (layer: LayerCompositeOpts): string => {
 }
 
 // Composite layered RGBA canvases (back to front) into a single 64x64 canvas.
+export const hasVisibleLayers = (layers: LayerCompositeOpts[]): boolean =>
+  layers.some((l) => l.visible)
+
 export const compositeLayers = (layers: LayerCompositeOpts[]): HTMLCanvasElement => {
   const out = createCanvas()
   const ctx = getCtx(out)
+  ctx.clearRect(0, 0, SKIN_W, SKIN_H)
   for (const l of layers) drawLayerComposite(ctx, l)
   return out
 }
@@ -176,12 +180,9 @@ export const buildBlockbenchBase = (model: ModelKind): HTMLCanvasElement => {
   return c
 }
 
-// Default starting skin — fully transparent.
-export const buildDefaultBase = (_model: ModelKind): HTMLCanvasElement => {
-  const c = createCanvas()
-  clearCanvas(c)
-  return c
-}
+// Default starting skin — Blockbench-style color blocks per body part.
+export const buildDefaultBase = (model: ModelKind): HTMLCanvasElement =>
+  buildBlockbenchBase(model)
 
 // Minimal aesthetic mannequin used for preset previews.
 export const buildMannequinBase = (model: ModelKind): HTMLCanvasElement => {

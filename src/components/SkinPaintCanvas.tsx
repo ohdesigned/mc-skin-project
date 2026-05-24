@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import * as skinview3d from 'skinview3d'
 import { MOUSE, TOUCH } from 'three'
 import { ModelKind } from '../skin/format'
-import { compositeLayers, toDataURL } from '../skin/canvas'
+import { compositeLayers, hasVisibleLayers, toDataURL } from '../skin/canvas'
+import { enableSkinAlphaMaterials } from '../skin/skinViewer'
 import { applyPartLayerModes } from '../skin/partVisibility'
 import {
   buildPaintTargets,
@@ -90,6 +91,7 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
       }
 
       viewerRef.current = viewer
+      enableSkinAlphaMaterials(viewer)
     } catch (e) {
       console.warn('SkinPaintCanvas init failed', e)
       setFailed(true)
@@ -110,6 +112,15 @@ export const SkinPaintCanvas = ({ model, className }: Props) => {
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer) return
+
+    if (!hasVisibleLayers(layers)) {
+      const empty = compositeLayers(layers)
+      compositeRef.current = empty
+      viewer.loadSkin(null)
+      viewer.render()
+      return
+    }
+
     const composite = compositeLayers(layers)
     compositeRef.current = composite
     try {

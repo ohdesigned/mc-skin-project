@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useEditor } from '../state/editor'
-import { compositeLayers, toDataURL } from '../skin/canvas'
+import { compositeLayers, hasVisibleLayers, toDataURL } from '../skin/canvas'
 import { SkinPreview } from './SkinPreview'
 
 /** Compact live 3D preview shown beneath the layer panel. */
@@ -12,6 +12,10 @@ export const MiniSkinPreview = () => {
 
   useEffect(() => {
     const t = window.setTimeout(() => {
+      if (!hasVisibleLayers(layers)) {
+        setUrl(null)
+        return
+      }
       setUrl(toDataURL(compositeLayers(layers)))
     }, 80)
     return () => clearTimeout(t)
