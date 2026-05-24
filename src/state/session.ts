@@ -1,8 +1,14 @@
-import type { BodyPart } from '../skin/format'
-import type { ModelKind } from '../skin/format'
+import type { BodyPart, ModelKind } from '../skin/format'
 import type { PartLayerMode } from '../skin/partVisibility'
 import type { PreviewBackgroundId } from '../skin/previewBackgrounds'
-import type { ToolKind } from './editor'
+
+export type DraftToolKind =
+  | 'pencil'
+  | 'eraser'
+  | 'fill'
+  | 'eyedropper'
+  | 'shade'
+  | 'lighten'
 
 export type AppRoute =
   | { name: 'home' }
@@ -25,7 +31,7 @@ export interface EditorDraft {
   name: string
   model: ModelKind
   activeLayerId: string
-  tool: ToolKind
+  tool: DraftToolKind
   color: string
   brushSize: number
   mirror: boolean
@@ -66,9 +72,17 @@ export const loadEditorDraft = (): EditorDraft | null => {
     const raw = localStorage.getItem(DRAFT_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as EditorDraft
-    if (!parsed || !Array.isArray(parsed.layers) || parsed.layers.length === 0) return null
+    if (!parsed || !Array.isArray(parsed.layers) || parsed.layers.length === 0) {
+      return null
+    }
+    if (!parsed.model || !parsed.activeLayerId) return null
     return parsed
   } catch {
+    try {
+      localStorage.removeItem(DRAFT_KEY)
+    } catch {
+      // ignore
+    }
     return null
   }
 }

@@ -17,6 +17,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Pixel Skin Studio failed to render', error, info)
+    const boot = document.getElementById('boot')
+    if (boot) boot.style.display = 'none'
   }
 
   render() {

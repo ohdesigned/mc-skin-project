@@ -19,9 +19,10 @@ import {
 } from '../skin/canvas'
 import { PART_LAYER_MODE_LABEL, type PartLayerMode } from '../skin/partVisibility'
 import {
-  draftMatchesRoute,
+  clearEditorDraft,
   loadEditorDraft,
   saveEditorDraft,
+  draftMatchesRoute,
 } from '../state/session'
 
 interface Props {
@@ -69,31 +70,40 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
     let cancelled = false
     ;(async () => {
       setReady(false)
-      const draft = loadEditorDraft()
-      if (draft && draftMatchesRoute(draft, editId)) {
-        if (cancelled) return
-        setName(draft.name)
-        await restoreFromDraft(draft)
-        if (cancelled) return
-        setReady(true)
-        return
-      }
-
-      if (editId) {
-        const found = galSkins.find((s) => s.id === editId)
-        if (!found) {
-          if (!cancelled) setReady(true)
+      try {
+        const draft = loadEditorDraft()
+        if (draft && draftMatchesRoute(draft, editId)) {
+          if (cancelled) return
+          setName(draft.name)
+          await restoreFromDraft(draft)
+          if (cancelled) return
+          setReady(true)
           return
         }
-        if (cancelled) return
-        setName(found.name)
-        setModel(found.model)
-        const c = await dataUrlToCanvas(found.dataUrl)
-        if (cancelled) return
-        loadSkinAsBase(c)
-      } else {
-        reset('slim')
-        setModel('slim')
+
+        if (editId) {
+          const found = galSkins.find((s) => s.id === editId)
+          if (!found) {
+            if (!cancelled) setReady(true)
+            return
+          }
+          if (cancelled) return
+          setName(found.name)
+          setModel(found.model)
+          const c = await dataUrlToCanvas(found.dataUrl)
+          if (cancelled) return
+          loadSkinAsBase(c)
+        } else {
+          reset('slim')
+          setModel('slim')
+        }
+      } catch (e) {
+        console.warn('Editor session restore failed', e)
+        clearEditorDraft()
+        if (!editId) {
+          reset('slim')
+          setModel('slim')
+        }
       }
       if (!cancelled) setReady(true)
     })()
@@ -106,7 +116,11 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   useEffect(() => {
     if (!ready) return
     const id = window.setTimeout(() => {
-      saveEditorDraft(serializeDraft(name, editId))
+      try {
+        saveEditorDraft(serializeDraft(name, editId))
+      } catch (e) {
+        console.warn('Could not save editor draft', e)
+      }
     }, 400)
     return () => window.clearTimeout(id)
   }, [

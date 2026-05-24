@@ -522,29 +522,42 @@ export const useEditor = create<EditorState>((set, get) => {
 
     restoreFromDraft: async (draft) => {
       const restored = await Promise.all(
-        draft.layers.map(async (rec) => ({
-          id: rec.id,
-          name: rec.name,
-          visible: rec.visible,
-          locked: rec.locked,
-          opacity: rec.opacity,
-          hue: rec.hue,
-          saturation: rec.saturation,
-          brightness: rec.brightness,
-          canvas: await dataUrlToCanvas(rec.dataUrl),
-        })),
+        draft.layers.map(async (rec) => {
+          if (!rec?.dataUrl) throw new Error('Invalid layer in saved draft')
+          return {
+            id: rec.id,
+            name: rec.name,
+            visible: rec.visible,
+            locked: rec.locked,
+            opacity: rec.opacity,
+            hue: rec.hue,
+            saturation: rec.saturation,
+            brightness: rec.brightness,
+            canvas: await dataUrlToCanvas(rec.dataUrl),
+          }
+        }),
       )
+      const modes = { ...emptyPartModes(), ...draft.partLayerModes }
+      const tool =
+        draft.tool === 'pencil' ||
+        draft.tool === 'eraser' ||
+        draft.tool === 'fill' ||
+        draft.tool === 'eyedropper' ||
+        draft.tool === 'shade' ||
+        draft.tool === 'lighten'
+          ? draft.tool
+          : 'pencil'
       set({
-        model: draft.model,
+        model: draft.model === 'classic' ? 'classic' : 'slim',
         layers: restored,
         activeLayerId: draft.activeLayerId || restored[0]?.id || null,
-        tool: draft.tool,
-        color: draft.color,
-        brushSize: draft.brushSize,
-        mirror: draft.mirror,
-        previewBackground: draft.previewBackground,
-        partLayerModes: draft.partLayerModes,
-        activePart: draft.activePart,
+        tool,
+        color: draft.color || '#E68E2E',
+        brushSize: draft.brushSize || 1,
+        mirror: !!draft.mirror,
+        previewBackground: draft.previewBackground || 'valley-birch',
+        partLayerModes: modes,
+        activePart: draft.activePart || 'all',
         history: [],
         future: [],
       })
