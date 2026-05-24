@@ -156,7 +156,7 @@ export const Editor = ({ editId, onExit, onSaved }: Props) => {
   }
 
   return (
-    <div className="h-full w-full p-3 lg:p-4 grid gap-3 grid-rows-[auto_1fr] overflow-hidden">
+    <div className="h-full w-full p-2 sm:p-3 lg:p-4 grid gap-2 sm:gap-3 grid-rows-[auto_1fr] overflow-hidden min-h-0">
       <EditorTopBar
         name={name}
         onName={setName}

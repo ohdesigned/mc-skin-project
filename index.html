@@ -11,9 +11,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
     <style>
-      #boot-fallback {
-        min-height: 100vh;
+      html, body {
+        height: 100%;
         margin: 0;
+        overflow: hidden;
+      }
+      #boot-fallback {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -23,13 +29,36 @@
         font-size: 22px;
         letter-spacing: 0.04em;
       }
+      #root {
+        height: 100%;
+        overflow: hidden;
+      }
     </style>
   </head>
   <body>
-    <div id="root">
-      <div id="boot-fallback">Loading Pixel Skin Studio...</div>
-    </div>
+    <div id="boot-fallback">Loading Pixel Skin Studio...</div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        var boot = document.getElementById('boot-fallback');
+        var root = document.getElementById('root');
+        function hideBoot() {
+          if (boot) boot.style.display = 'none';
+        }
+        if (root) {
+          new MutationObserver(function () {
+            if (root.childElementCount > 0) hideBoot();
+          }).observe(root, { childList: true, subtree: true });
+        }
+        window.addEventListener('pss-ready', hideBoot);
+        setTimeout(function () {
+          if (boot && boot.style.display !== 'none') {
+            boot.textContent = 'Still loading... try refreshing the page.';
+          }
+        }, 6000);
+      })();
+    </script>
     <noscript>
       <p style="font-family: sans-serif; padding: 24px; text-align: center;">
         Pixel Skin Studio requires JavaScript. Please enable it and reload.

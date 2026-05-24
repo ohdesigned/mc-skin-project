@@ -36,9 +36,9 @@ export const Home = ({ onNew, onEdit }: Props) => {
   const dateStr = `${day} ${time} ${year}`
 
   return (
-    <div className="h-full w-full p-4 lg:p-6 overflow-hidden flex flex-col">
+    <div className="h-full w-full p-3 lg:p-4 overflow-hidden flex flex-col">
       <TopBar dateStr={dateStr} />
-      <div className="mt-4 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
+      <div className="mt-3 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-3 overflow-hidden">
         <MainWindow
           filter={filter}
           setFilter={setFilter}
@@ -92,7 +92,7 @@ interface MainWindowProps {
 
 const MainWindow = (p: MainWindowProps) => {
   return (
-    <div className="pixel-window flex flex-col min-h-0">
+    <div className="pixel-window flex flex-col min-h-0 h-full overflow-hidden">
       <div className="pixel-title-bar">
         <span>/SKINS/MY-CREATIONS</span>
         <div className="ml-auto flex items-center gap-2">
@@ -198,7 +198,7 @@ const FilterPill = ({
 )
 
 const EmptyState = ({ onNew }: { onNew: () => void }) => (
-  <div className="h-full min-h-[300px] grid place-items-center">
+  <div className="h-full min-h-0 grid place-items-center">
     <div className="text-center">
       <div className="mx-auto w-20 h-20 mb-3 grid place-items-center">
         <Icon name="folder-big" size={48} />
@@ -325,7 +325,7 @@ const SkinTile = ({
 }
 
 const SideRack = ({ onNew, count }: { onNew: () => void; count: number }) => (
-  <div className="hidden lg:flex flex-col gap-4">
+  <div className="hidden lg:flex flex-col gap-3 min-h-0 overflow-hidden">
     <SideSlot
       label="HD"
       sublabel={`${count} skins`}
