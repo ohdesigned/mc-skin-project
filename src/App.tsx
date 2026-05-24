@@ -1,11 +1,8 @@
-import { lazy, Suspense, useState } from 'react'
+import { useState } from 'react'
 import { Home } from './pages/Home'
+import { Editor } from './pages/Editor'
 import { Toaster, useToast } from './components/Toaster'
 import { DialogHost } from './components/DialogHost'
-
-const Editor = lazy(() =>
-  import('./pages/Editor').then((m) => ({ default: m.Editor })),
-)
 
 export type Route =
   | { name: 'home' }
@@ -24,21 +21,13 @@ export const App = () => {
         />
       )}
       {route.name === 'editor' && (
-        <Suspense
-          fallback={
-            <div className="h-full grid place-items-center panel-text text-accent-cream">
-              Opening editor...
-            </div>
-          }
-        >
-          <Editor
-            editId={route.editId}
-            onExit={() => setRoute({ name: 'home' })}
-            onSaved={(name) => {
-              toast.show(`Saved "${name}" to your project floppy.`)
-            }}
-          />
-        </Suspense>
+        <Editor
+          editId={route.editId}
+          onExit={() => setRoute({ name: 'home' })}
+          onSaved={(name) => {
+            toast.show(`Saved "${name}" to your project floppy.`)
+          }}
+        />
       )}
 
       <Toaster />

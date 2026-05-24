@@ -4,15 +4,13 @@ import { fileURLToPath, URL } from 'node:url'
 import { copyFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const repoName = 'mc-skin-project'
-const ghPagesBase = `/${repoName}/`
-
-/** After build, copy index.html → 404.html so GitHub Pages serves the SPA. */
+// After build, copy index.html → 404.html so GitHub Pages serves the SPA
+// for any direct/refresh load.
 const ghPages404 = (outDir: string): Plugin => ({
   name: 'gh-pages-404',
   closeBundle() {
-    const dist = resolve(process.cwd(), outDir)
-    copyFileSync(resolve(dist, 'index.html'), resolve(dist, '404.html'))
+    const out = resolve(process.cwd(), outDir)
+    copyFileSync(resolve(out, 'index.html'), resolve(out, '404.html'))
   },
 })
 
@@ -21,8 +19,14 @@ export default defineConfig(({ mode }) => {
   const outDir = isPages ? 'docs' : 'dist'
 
   return {
-    base: isPages ? ghPagesBase : '/',
-    build: { outDir },
+    // Relative base ensures asset URLs resolve correctly when served from
+    // any sub-path (e.g. /mc-skin-project/docs/) without manual config.
+    base: isPages ? './' : '/',
+    build: {
+      outDir,
+      emptyOutDir: true,
+      chunkSizeWarningLimit: 800,
+    },
     plugins: [react(), ...(isPages ? [ghPages404(outDir)] : [])],
     resolve: {
       alias: {

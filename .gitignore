@@ -3,7 +3,10 @@ dist
 *.local
 .DS_Store
 tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 .env
 .env.*
 
-# docs/ is the committed GitHub Pages build output — do NOT ignore it.
+# docs/ is the committed GitHub Pages build output - do NOT ignore it.

@@ -2,17 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/mc-skin-project/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#2A2138" />
     <meta name="description" content="Pixel Skin Studio - create and edit Minecraft Java Edition skins in your browser." />
     <title>Pixel Skin Studio - MC Skin Creator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <script>
+      // When GitHub Pages serves the source HTML from the repo root, forward
+      // to the built site under /docs/. The built copy of this file lives at
+      // /docs/index.html and its pathname already contains "/docs/" so this
+      // check never loops.
+      (function () {
+        try {
+          var isGitHubPages =
+            location.hostname.endsWith('github.io') ||
+            location.hostname.endsWith('githubusercontent.com');
+          if (isGitHubPages && location.pathname.indexOf('/docs/') === -1) {
+            var target = location.pathname.replace(/\/?$/, '/') + 'docs/';
+            location.replace(target + location.search + location.hash);
+          }
+        } catch (_) {}
+      })();
+    </script>
+    <style>
+      html, body { margin: 0; height: 100%; background: #1B1424; color: #F7E6CF; }
+      body {
+        font-family: 'VT323', monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #boot {
+        text-align: center;
+        padding: 24px;
+        font-size: 24px;
+        background: radial-gradient(ellipse at center, #2A2138 0%, #1B1424 70%, #0c0712 100%);
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
   </head>
   <body>
+    <div id="boot">Loading Pixel Skin Studio...</div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <noscript>
+      <p style="font-family: sans-serif; padding: 24px; text-align: center;">
+        This app requires JavaScript. Please enable it and reload.
+      </p>
+    </noscript>
   </body>
 </html>
