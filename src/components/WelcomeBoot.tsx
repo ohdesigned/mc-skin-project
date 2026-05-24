@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const BOOT_LINES = [
   '> Booting PIXEL SKIN STUDIO v1.0...',
@@ -17,6 +17,8 @@ export const WelcomeBoot = ({ onDone }: Props) => {
   const [lineIdx, setLineIdx] = useState(0)
   const [charIdx, setCharIdx] = useState(0)
   const [done, setDone] = useState(false)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   // Typewriter animation — separate from the finish callback so React effect
   // cleanup doesn't cancel onDone when `done` flips to true.
@@ -40,14 +42,16 @@ export const WelcomeBoot = ({ onDone }: Props) => {
 
   useEffect(() => {
     if (!done) return
-    const t = setTimeout(onDone, 750)
+    const t = setTimeout(() => onDoneRef.current(), 750)
     return () => clearTimeout(t)
-  }, [done, onDone])
+  }, [done])
+
+  const skip = () => onDoneRef.current()
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
-      onClick={() => onDone()}
+      onClick={skip}
       role="presentation"
       title="Click to skip"
       style={{
